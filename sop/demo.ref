@@ -1,0 +1,93 @@
+Dummy bucket function of [] cost=(22, 25)
+    Sum over variable 1 function of [] cost=(21, 24)
+        Sum over variable 2 function of [1] cost=(3, 3)
+            f(1, 2)
+        Sum over variable 0 function of [1] cost=(3, 3)
+            f(0, 1)
+The sum is: 1.000000
+Complexity: O(|dom|^2)
+Cost: 22 adds, 25 muls
+Memory cost: 0
+
+Dummy bucket function of [] cost=(8, 9)
+    Sum over variable 1 function of [] cost=(7, 8)
+        Sum over variable 2 function of [1] cost=(3, 3)
+            f(1, 2)
+        Sum over variable 0 function of [1] cost=(3, 3)
+            f(0, 1)
+The sum is: 0.555556
+Complexity: O(|dom|^1)
+Cost: 8 adds, 9 muls
+Memory cost: 0
+
+The sum is: 0.333333
+Complexity: O(|dom|^1)
+Cost: 8 adds, 9 muls
+Memory cost: 0
+
+The sum is: 0.111111
+Complexity: O(|dom|^1)
+Cost: 8 adds, 9 muls
+Memory cost: 0
+
+Dummy bucket function of [1] cost=(12, 24) mem=144
+    Sum over variable 2 function of [1] cost=(6, 9) mem=144
+        f(1, 2) mem=72
+    Sum over variable 0 function of [1] cost=(6, 9) mem=144
+        f(0, 1) mem=72
+The sum is: [ 0.55555556  0.33333333  0.11111111]
+Complexity: O(|dom|^2)
+Cost: 12 adds, 24 muls
+Memory cost: 144
+
+Dummy bucket function of [] cost=(14, 25) mem=144
+    Sum over variable 1 function of [] cost=(14, 24) mem=144
+        Sum over variable 2 function of [1] cost=(6, 9) mem=144
+            f(1, 2) mem=72
+        Sum over variable 0 function of [1] cost=(6, 9) mem=144
+            f(0, 1) mem=72
+The sum is: 1.0
+Complexity: O(|dom|^2)
+Cost: 14 adds, 25 muls
+Memory cost: 144
+
+Dummy bucket function of [0, 1, 2] cost=(0, 54) mem=360
+    f(0, 1) mem=72
+    f(1, 2) mem=72
+The sum is: [[[ 0.03703704  0.03703704  0.03703704]
+  [ 0.          0.14814815  0.07407407]
+  [ 0.          0.          0.        ]]
+
+ [[ 0.11111111  0.11111111  0.11111111]
+  [ 0.          0.          0.        ]
+  [ 0.          0.          0.        ]]
+
+ [[ 0.03703704  0.03703704  0.03703704]
+  [ 0.          0.07407407  0.03703704]
+  [ 0.          0.03703704  0.07407407]]]
+Complexity: O(|dom|^3)
+Cost: 0 adds, 54 muls
+Memory cost: 360
+
+Dummy bucket function of [0, 1] cost=(6, 27) mem=168
+    Sum over variable 2 function of [1] cost=(6, 9) mem=144
+        f(1, 2) mem=72
+    f(0, 1) mem=72
+The sum is: [[ 0.11111111  0.22222222  0.        ]
+ [ 0.33333333  0.          0.        ]
+ [ 0.11111111  0.11111111  0.11111111]]
+Complexity: O(|dom|^2)
+Cost: 6 adds, 27 muls
+Memory cost: 168
+
+Dummy bucket function of [0, 1] cost=(6, 27) mem=168
+    Sum over variable 2 function of [1] cost=(6, 9) mem=144
+        f(1, 2) mem=72
+    f(0, 1) mem=72
+The sum is: [[ 0.11111111  0.33333333  0.11111111]
+ [ 0.22222222  0.          0.11111111]
+ [ 0.          0.          0.11111111]]
+Complexity: O(|dom|^2)
+Cost: 6 adds, 27 muls
+Memory cost: 168
+

@@ -1,0 +1,9 @@
+small:
+* put source in a public repo
+* smarter network drawing
+* faster sampling using numpy tricks
+
+big:
+* logistic regression nodes
+* grouping of nodes (requires sparse CPTs)
+* optimizations
