@@ -3,10 +3,10 @@
 import operator
 import numpy
 from math import exp
+from math import lgamma
 
 
 from Utils import compute_counts_array
-from Utils import lngamma  # hope it can eventually make it into math
 
 from DataAccess import Attr, AttrSet
 from BayesNet import BayesNode, BayesNet
@@ -62,11 +62,11 @@ def lnP_dataset_cond_network_structure(bn, dataset, priorN = None):
         for nodeattrcounts in blockiter(numpy.ravel(c), ri): # for j = 1 to q_i
             Nij = sum(nodeattrcounts)
             #print "-->",nodeattrcounts
-            lnP += lngamma(float(priorN) / qi) \
-                   - lngamma(float(priorN) / qi + Nij)
+            lnP += lgamma(float(priorN) / qi) \
+                   - lgamma(float(priorN) / qi + Nij)
             for Nijk in nodeattrcounts: # for k = 1 to r_i
-                lnP += lngamma(float(priorN) / qi / ri + Nijk) \
-                       - lngamma(float(priorN) / qi / ri)
+                lnP += lgamma(float(priorN) / qi / ri + Nijk) \
+                       - lgamma(float(priorN) / qi / ri)
     return lnP
 
 
