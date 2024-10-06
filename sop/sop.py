@@ -140,10 +140,8 @@ class array_sop(sop_base):
                 shape_prod = [1] * len(all_vars)
                 for v in old_all_vars:
                     shape_prod[all_vars.index(v)] = self.sop.dim[v]
-                #prod = numpy.reshape(prod, shape_prod)
-                prod.shape = tuple(shape_prod)
+                prod = prod.reshape(shape_prod)
                 prod = prod * tmp_array
-                prod = numpy.array(prod)
             #sum over the bucket variable
             if self.var != -1:
                 prod = numpy.sum(prod, all_vars.index(self.var))
