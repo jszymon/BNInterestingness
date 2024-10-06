@@ -1,10 +1,8 @@
-import numpy
+import numpy as np
 import random
 
-from DataAccess import Attr, RecordReader
+from DataAccess import RecordReader
 
-from BayesNet import BayesNode, BayesNet
-from .BNutils import distr_2_str
 from .BayesNetGraph import topSort
 
 
@@ -37,31 +35,27 @@ class BayesSampler(RecordReader):
             self.values[i] = randUnivDiscr(distr)
         return list(self.values)
         
+    def draw_n_samples(self, n):
+        rng = np.random.default_rng()
+        sampled_vars = [None] * len(self.bn)
+        for i in self.toponodes:
+            node = self.bn[i]
+            if len(node.parents) == 0:
+                distr = node.distr
+                x = rng.choice(len(distr), n, p=node.distr)
+            else:
+                # cumulative distr, skip the last value: it will
+                # always be assigned max cetegory
+                cdistr = node.distr.cumsum(axis=-1)[...,:-1]
+                distr = cdistr[*[sampled_vars[p] for p in node.parents]]
+                u = rng.random(n)
+                x = distr.shape[1] - (u[:,None] <= distr).sum(axis=1)
 
-
-if __name__ == "__main__":
-    print("Sampling from a BN")
-    bn = BayesNet("testNet", [Attr('A', "CATEG", [0,1]),
-                              Attr('B', "CATEG", [0,1]),
-                              Attr('Y', "CATEG", [0,1,2])])
-    print(bn)
-    bn['Y'].set_parents_distr(['B'], numpy.array([[0.7,0.1,0.2],[0.5,0.3,0.2]]))
-    print(bn)
-    print(bn['A'])
-    bn.validate()
-    print(bn.P([0,0,0]))
-    print(distr_2_str(bn.jointP()))
-
-    c = [0, 0, 0]
-    for i in range(1000):
-        r = randUnivDiscr([0.1, 0.6, 0.3])
-        c[r] += 1
-    print(c)
-
-    bs = BayesSampler(bn)
-    c = [0, 0, 0]
-    for i in range(10000):
-        sample = bs.next()
-        c[sample[2]] += 1
-        #print sample
-    print(c)
+                # slow attempt 1
+                #x1 = np.array(list(map(lambda a, y: np.searchsorted(a, y, side="right"), distr, u)))
+                # slow attempt 2
+                #distr = np.column_stack([u, distr])
+                #x = np.apply_along_axis(lambda a: np.searchsorted(a[1:], a[0], side="right"), 1, distr)
+            sampled_vars[i] = x
+        sampled_vars = np.column_stack(sampled_vars)
+        return sampled_vars

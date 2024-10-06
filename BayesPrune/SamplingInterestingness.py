@@ -296,9 +296,12 @@ class BN_interestingness_sample(object):
             else:
                 self.ds.rewind()
                 sample_data = list(self.ds)
-            it = itertools.islice(self.sampler, self.batch_size)
-            sample_bn = list(it)
-
+            # use iterative sampler
+            #it = itertools.islice(self.sampler, self.batch_size)
+            #sample_bn = list(it)
+            # use array sampler (warning: record Selection is ignored)
+            sample_bn = self.sampler1.draw_n_samples(self.batch_size).take(self.network_attrs_used, axis=1).tolist()
+            
             if self.disk_storage:
                 self.tmp_file.flush() ### needed on Windows!
                 self.tmp_file.seek(0)
@@ -513,9 +516,10 @@ class BN_interestingness_sample(object):
         #self.counted_on_all_data = False # whether we completed counting from data
 
         #self.sampler = BayesSampler(self.bn)  # class for sampling from bayesian network
-        sampler1 = BayesSampler(self.bn)
-        sampler2 = SelectionReader(sampler1, selectionCond)
-        self.sampler = ProjectionReader(sampler2, self.network_attrs_used)# class for sampling from bayesian network
+        self.sampler1 = BayesSampler(self.bn)
+        self.sampler2 = SelectionReader(self.sampler1, selectionCond)
+        self.sampler3 = ProjectionReader(self.sampler2, self.network_attrs_used)
+        self.sampler = self.sampler3 # class for sampling from bayesian network
 
 
     def update_counts(self, hyp, sample_bn, sample_data):
