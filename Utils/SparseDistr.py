@@ -51,5 +51,16 @@ class SparseDistr():
         return prior
     def sample(self, n):
         rng = np.random.default_rng()
-        is_prior = (rng.rand(n) <= self.prior_factor)
-        #s = np
+        if self.X.shape[0] == 0:
+            from_prior = np.ones(n, dtype=bool)
+        else:
+            from_prior = (rng.random(n) < self.prior_factor)
+        n_from_prior = from_prior.sum()
+        s = np.empty((n, self.nd), dtype=int)
+        # sample from prior
+        for i in range(self.nd):
+            s[from_prior,i] = rng.choice(self.shape[i], n_from_prior)
+        # sample from distr
+        if n_from_prior < n:
+            s[~from_prior] = self.X[rng.choice(self.X.shape[0], n-n_from_prior, p=self.p)]
+        return s
