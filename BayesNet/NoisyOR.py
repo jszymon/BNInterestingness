@@ -2,8 +2,6 @@
 
 import numpy
 
-import BayesNet
-
 class NoisyOR(object):
     def __init__(self, names, shape):
         self.names = names
@@ -38,4 +36,5 @@ if __name__ == '__main__':
     o = NoisyOR(["C3", "C2"], [2, 2])
     o.add_variable("true", 0.25)
     o.add_variable("C2", 0.1)
-    print(BayesNet.distr_2_str(o.get_table(), cond = True))
+    from BNutils import distr_2_str
+    print(distr_2_str(o.get_table(), cond = True))

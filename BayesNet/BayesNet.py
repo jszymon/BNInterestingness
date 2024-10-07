@@ -46,6 +46,11 @@ class BayesNode(Attr):
         # TODO: verify distr size
         self.distr = distr
 
+    def del_all_parents(self):
+        self.parents = []
+        nd = len(self.domain)
+        self.distr = numpy.zeros(nd) + 1.0/nd
+
     def __str__(self):
         ret = super(BayesNode, self).__str__()
         ret += "\nParents: " + str([self.bnet[i].name for i in self.parents])
@@ -58,7 +63,7 @@ class BayesNet(AttrSet):
     def __init__(self, name = "", attrs = None):
         nodes = [BayesNode(self, a) for a in attrs]
         super(BayesNet, self).__init__(name, nodes)
-
+        self.joint_distrs = []
 
 
     def addEdge(self, src_name, dst_name):
@@ -84,8 +89,26 @@ class BayesNet(AttrSet):
         dst_node.distr = numpy.sum(dst_node.distr, dst_node.parents.index(i)) / 2
         del dst_node.parents[dst_node.parents.index(i)]
 
-    
+    def addJointDistr(self, node_names):
+        """Declares that given nodes will be modeled using their joint
+        distribution.
 
+        This turns the network into a chain graph.  Currently nodes in
+        the group cannot have parents.  Their current parents will be
+        removed.  Joint distrubutions cannot overlap (an error will be
+        raised).
+
+        """
+        ni = self.names_to_numbers(node_names)
+        for i in ni:
+            # check that nodes are not already in a joint distribution.
+            for j in self.joint_distrs:
+                if i in j:
+                    name = self.numbers_to_names([i])[0]
+                    raise RuntimeError(f"Node {name} already part of a joint distribution.")
+            # remove parents
+            self.bn[i].del_all_parents()
+        #self.joint
 
     def validate(self, err = 0.00001):
         """Validates the network.
