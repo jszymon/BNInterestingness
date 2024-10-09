@@ -58,12 +58,20 @@ class BayesNode(Attr):
         return ret
 
 
+class JointNode:
+    def __init__(self, bnet, attr):
+        """Create a node representing a joint distribution of several variables.
+
+        Initially the node has no parents and a uniform distribution."""
+        pass
+
 
 class BayesNet(AttrSet):
     def __init__(self, name = "", attrs = None):
         nodes = [BayesNode(self, a) for a in attrs]
         super(BayesNet, self).__init__(name, nodes)
         self.joint_distrs = []
+        self.nodes_in_joint = set() # nodes which are part of joint distrbituions
 
 
     def addEdge(self, src_name, dst_name):
@@ -74,7 +82,7 @@ class BayesNet(AttrSet):
         dst_node = self[dst_name]
         if i in dst_node.parents:
             raise RuntimeError("Nodes already connected")
-        # TODO: check if cycles arent introduced
+        # TODO: check if cycles aren't introduced
         dst_node.distr = numpy.array([dst_node.distr] * len(src_node.domain))
         dst_node.parents.insert(0,i)
 
@@ -108,7 +116,7 @@ class BayesNet(AttrSet):
                     raise RuntimeError(f"Node {name} already part of a joint distribution.")
             # remove parents
             self.bn[i].del_all_parents()
-        #self.joint
+        self.joint_distrs.append(())
 
     def validate(self, err = 0.00001):
         """Validates the network.
@@ -127,7 +135,8 @@ class BayesNet(AttrSet):
         """Normalize all conditional probabilities in all nodes so
         that they add up to 1.0."""
         for n in self:
-            n.normalizeProbabilities()
+            if node not in self.nodes_in_joint:
+                n.normalizeProbabilities()
 
     def P(self, x):
         """Return the probability of input vector x"""
@@ -156,23 +165,3 @@ class BayesNet(AttrSet):
         ret += "\n".join([str(node) for node in self])
         return ret
 
-if __name__ == '__main__':
-    bn = BayesNet("testNet",
-                  [Attr('A', "CATEG", [0,1]),
-                   Attr('B', "CATEG", [0,1]),
-                   Attr('Y', "CATEG", [0,1,2])])
-    print(bn)
-    print('------------------')
-
-    bn['Y'].set_parents_distr(['B'], numpy.array([[0.7,0.1,0.2],[0.5,0.3,0.2]]))
-    #bn['Y'].set_parents_distr(['B'], numpy.array([[0.7,0.1,0.2],[0.5,0.3,1.2]]))  # wrong sum to test validate()
-    print(bn)
-    print(bn['A'])
-    bn.validate()
-    print(bn.P([0,0,0]))
-    print(distr_2_str(bn.jointP()))
-
-    bn.addEdge('A', 'B')
-    print(bn)
-    bn.delEdge('A', 'B')
-    print(bn)
