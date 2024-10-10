@@ -42,6 +42,19 @@ class SparseDistr():
         if len(self.p) == 0:
             return
         self.p /= self.p.sum()
+    def P(self, x):
+        """Probability for a given input vector x.
+
+        Currently inefficient."""
+        if self.X.shape[0] == 0:
+            p = 1/self.size
+        else:
+            # assumes no duplicated present in dictionary
+            idx = np.flatnonzero((self.X == x).all(axis=1))
+            p = 1/self.size * self.prior_factor
+            if len(idx) > 0:
+                p += self.p[idx.item()] * (1-self.prior_factor)
+        return p
     def to_array(self):
         prior = np.full(self.shape, 1/self.size)
         if self.X.shape[0] == 0:
@@ -68,9 +81,9 @@ class SparseDistr():
         if self.X.shape[0] == 0:
             ret = f"Uniform prob: {1/self.size}"
         else:
-            ret = "\n".join(f"{tuple(x)}->{p*(1-self.prior_factor)}"
-                            for x, p in zip(self.X, self.p))
             default_p = self.prior_factor / self.size
+            ret = "\n".join(f"{tuple(x)}->{default_p + p*(1-self.prior_factor)}"
+                            for x, p in zip(self.X, self.p))
             ret += f"\nremaining cells: {default_p}"
         return ret
 

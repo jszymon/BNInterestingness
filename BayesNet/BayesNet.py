@@ -77,6 +77,11 @@ class JointNode:
         self.nodes = nodes
         self.shape = tuple(self.bnet[i].nd for i in self.nodes)
         self.distr = SparseDistr(self.shape)
+    def P(self, x):
+        """Get (conditional) probability for given vector x."""
+        idx = [x[i] for i in self.nodes]
+        return self.distr.P(tuple(idx))
+
     def __str__(self):
         ret = "JointNode: " + str([self.bnet[i].name for i in self.nodes])
         ret += "\nDistribution:\n" + str(self.distr)
@@ -156,12 +161,17 @@ class BayesNet(AttrSet):
         for n in self:
             if not n.in_joint:
                 n.normalizeProbabilities()
+        for jn in self.joint_distrs:
+            jn.distr.normalize()
 
     def P(self, x):
         """Return the probability of input vector x"""
         P = 1.0
         for i, n in enumerate(self):
-            P *= n.P(x)[x[i]]
+            if not n.in_joint:
+                P *= n.P(x)[x[i]]
+        for jn in self.joint_distrs:
+            P *= jn.P(x)
         return P
 
     def get_shape(self):

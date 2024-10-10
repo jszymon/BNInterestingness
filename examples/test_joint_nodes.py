@@ -29,3 +29,14 @@ print(distr_2_str(bn.jointP()))
 print("---------------------------------")
 bn.addJointDistr(["A", "B"])
 print(bn)
+print(bn.P([0,0,0]))
+print(distr_2_str(bn.jointP()))
+
+print("---------------------------------")
+# warning: breaks encapsulation
+d = bn.joint_distrs[0].distr
+d.prior_factor = 0.1
+d.update_distr({(2,0):0.4, (1,1):0.6})
+print(bn)
+print(bn.P([0,0,0]))
+print(distr_2_str(bn.jointP()))
