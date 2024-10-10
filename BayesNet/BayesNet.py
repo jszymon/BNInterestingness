@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import numpy
+import numpy as np
 
 from DataAccess import Attr, AttrSet
 from .BNutils import blockiter, distr_2_str
-
+from Utils import SparseDistr
     
 
 
@@ -17,8 +17,9 @@ class BayesNode(Attr):
         super(BayesNode, self).__init__(attr.name, attr.type, attr.domain)
         self.bnet = bnet # reference to BayesNet the node is in
         self.parents = []
-        nd = len(self.domain)
-        self.distr = numpy.zeros(nd) + 1.0/nd
+        self.nd = len(self.domain)
+        self.in_joint = False  # whether the node is member of a joint distribution
+        self.distr = np.full(self.nd, + 1.0/self.nd)
 
     def fix_data(self):
         """Fix node params which are known only after the full network is created"""
@@ -32,7 +33,7 @@ class BayesNode(Attr):
         they add up to 1.0."""
         ri = len(self.domain)
         i = 0
-        flat = numpy.ravel(self.distr)
+        flat = np.ravel(self.distr)
         while i < len(flat):
             s = sum(flat[i:i+ri])
             for j in range(i, i+ri):
@@ -49,29 +50,43 @@ class BayesNode(Attr):
     def del_all_parents(self):
         self.parents = []
         nd = len(self.domain)
-        self.distr = numpy.zeros(nd) + 1.0/nd
+        self.distr = np.zeros(nd) + 1.0/nd
 
     def __str__(self):
         ret = super(BayesNode, self).__str__()
         ret += "\nParents: " + str([self.bnet[i].name for i in self.parents])
-        ret += "\nDistribution:\n" + distr_2_str(self.distr, cond = True)
+        if self.in_joint:
+            ret += "\nPart of a joint distribution\n"
+        else:
+            ret += "\nDistribution:\n" + distr_2_str(self.distr, cond = True)
         return ret
 
 
 class JointNode:
-    def __init__(self, bnet, attr):
+    def __init__(self, bnet, nodes):
         """Create a node representing a joint distribution of several variables.
 
-        Initially the node has no parents and a uniform distribution."""
-        pass
+        The variables are also present as ordinary nodes.  Nodes
+        present in JointNode cannot have parents.
 
+        """
+        self.bnet = bnet
+        for i in nodes:
+            if not isinstance(i, int):
+                raise RuntimeError(f"Nodes in a joint must be given as ints.  Got {i}")
+        self.nodes = nodes
+        self.shape = tuple(self.bnet[i].nd for i in self.nodes)
+        self.distr = SparseDistr(self.shape)
+    def __str__(self):
+        ret = "JointNode: " + str([self.bnet[i].name for i in self.nodes])
+        ret += "\nDistribution:\n" + str(self.distr)
+        return ret
 
 class BayesNet(AttrSet):
     def __init__(self, name = "", attrs = None):
         nodes = [BayesNode(self, a) for a in attrs]
         super(BayesNet, self).__init__(name, nodes)
         self.joint_distrs = []
-        self.nodes_in_joint = set() # nodes which are part of joint distrbituions
 
 
     def addEdge(self, src_name, dst_name):
@@ -83,7 +98,7 @@ class BayesNet(AttrSet):
         if i in dst_node.parents:
             raise RuntimeError("Nodes already connected")
         # TODO: check if cycles aren't introduced
-        dst_node.distr = numpy.array([dst_node.distr] * len(src_node.domain))
+        dst_node.distr = np.array([dst_node.distr] * len(src_node.domain))
         dst_node.parents.insert(0,i)
 
     def delEdge(self, src_name, dst_name):
@@ -94,7 +109,7 @@ class BayesNet(AttrSet):
         dst_node = self[dst_name]
         if i not in dst_node.parents:
             raise RuntimeError("Edge does not exist")
-        dst_node.distr = numpy.sum(dst_node.distr, dst_node.parents.index(i)) / 2
+        dst_node.distr = np.sum(dst_node.distr, dst_node.parents.index(i)) / 2
         del dst_node.parents[dst_node.parents.index(i)]
 
     def addJointDistr(self, node_names):
@@ -109,14 +124,18 @@ class BayesNet(AttrSet):
         """
         ni = self.names_to_numbers(node_names)
         for i in ni:
+            name = self.numbers_to_names([i])[0]
             # check that nodes are not already in a joint distribution.
             for j in self.joint_distrs:
-                if i in j:
-                    name = self.numbers_to_names([i])[0]
+                if i in j.nodes or self[i].in_joint:
                     raise RuntimeError(f"Node {name} already part of a joint distribution.")
-            # remove parents
-            self.bn[i].del_all_parents()
-        self.joint_distrs.append(())
+            # check that nodes have no patents
+            if len(self[i].parents) != 0:
+                raise RuntimeError(f"Nodes in a joint distribution cannot have parents (node {name}).")
+        for i in ni:
+            self[i].in_joint = True
+        jn = JointNode(self, ni)
+        self.joint_distrs.append(jn)
 
     def validate(self, err = 0.00001):
         """Validates the network.
@@ -126,7 +145,7 @@ class BayesNet(AttrSet):
         # TODO: acyclicity, distr sizes
         for n in self:
             ri = len(n.domain)
-            for subdistr in blockiter(numpy.ravel(n.distr), ri):
+            for subdistr in blockiter(np.ravel(n.distr), ri):
                 if abs(sum(subdistr) - 1.0) > err:
                     print("error in node", n.name, "prob sum=", sum(subdistr))
 
@@ -135,7 +154,7 @@ class BayesNet(AttrSet):
         """Normalize all conditional probabilities in all nodes so
         that they add up to 1.0."""
         for n in self:
-            if node not in self.nodes_in_joint:
+            if not n.in_joint:
                 n.normalizeProbabilities()
 
     def P(self, x):
@@ -153,8 +172,8 @@ class BayesNet(AttrSet):
     def jointP(self):
         """Return the numpy for the joint distribution of the network."""
         shape = tuple(self.get_shape())
-        d = numpy.zeros(shape)
-        for x in numpy.ndindex(shape):
+        d = np.zeros(shape)
+        for x in np.ndindex(shape):
             d[x] = self.P(x)
         return d
     
@@ -163,5 +182,9 @@ class BayesNet(AttrSet):
         ret += "Bayesian network: " + self.name
         ret += "\nNodes:\n"
         ret += "\n".join([str(node) for node in self])
+        if len(self.joint_distrs) > 0:
+            ret += "\nJoint distributions:\n"
+            ret += "\n".join([str(jn) for jn in self.joint_distrs])
+            ret += "\n"
         return ret
 
