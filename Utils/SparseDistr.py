@@ -64,3 +64,13 @@ class SparseDistr():
         if n_from_prior < n:
             s[~from_prior] = self.X[rng.choice(self.X.shape[0], n-n_from_prior, p=self.p)]
         return s
+    def __str__(self):
+        if self.X.shape[0] == 0:
+            ret = f"Uniform prob: {1/self.size}"
+        else:
+            ret = "\n".join(f"{tuple(x)}->{p*(1-self.prior_factor)}"
+                            for x, p in zip(self.X, self.p))
+            default_p = self.prior_factor / self.size
+            ret += f"\nremaining cells: {default_p}"
+        return ret
+
