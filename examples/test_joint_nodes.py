@@ -1,3 +1,5 @@
+from tempfile import NamedTemporaryFile
+
 import numpy as np
 
 from BayesNet import BayesNet
@@ -5,6 +7,8 @@ from BayesNet import BayesSampler
 
 from BayesNet import BayesNode, BayesNet
 from BayesNet import distr_2_str
+
+from BayesNet import read_Hugin_file, write_Hugin_file
 
 from DataAccess import Attr, RecordReader
 
@@ -40,3 +44,9 @@ d.update_distr({(2,0):0.4, (1,1):0.6})
 print(bn)
 print(bn.P([0,0,0]))
 print(distr_2_str(bn.jointP()))
+
+f=NamedTemporaryFile(mode="w+")
+write_Hugin_file(bn, f)
+print(f.name)
+f.seek(0)
+print(f.read())

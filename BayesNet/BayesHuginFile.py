@@ -222,18 +222,25 @@ def write_Hugin_file(bn, f):
     for i, n in enumerate(bn):
         print("\nnode V_" + str(i), file=f)
         print("{", file=f)
-        print("  states = (" + " ".join(["\""+x+"\"" for x in n.domain]) + ");", file=f)
+        print("  states = (" + " ".join(["\""+str(x)+"\"" for x in n.domain]) + ");", file=f)
         print("  label = \"" + n.name + "\";", file=f)
         print("  position = (0 0);", file=f)
         print("}", file=f)
     for i, n in enumerate(bn):
-        if len(n.parents) > 0:
-            cond = "| " + " ".join(["V_"+str(x) for x in n.parents])
-        else:
-            cond = ""
-        print("\npotential ( V_" + str(i) + cond + ")", file=f)
+        if not n.in_joint:
+            if len(n.parents) > 0:
+                cond = "| " + " ".join(["V_"+str(x) for x in n.parents])
+            else:
+                cond = ""
+            print("\npotential ( V_" + str(i) + cond + ")", file=f)
+            print("{", file=f)
+            print("  data = (" + " ".join([str(x) for x in n.distr.flat]) + ");", file=f)
+            print("}", file=f)
+    for i, jn in enumerate(bn.joint_distrs):
+        vars_str = " ".join("V_"+str(x) for x in jn.nodes)
+        print("\npotential ( " + vars_str + ")", file=f)
         print("{", file=f)
-        print("  data = (" + " ".join([str(x) for x in n.distr.flat]) + ");", file=f)
+        print("  data = (" + " ".join([str(x) for x in jn.distr.to_array().flat]) + ");", file=f)
         print("}", file=f)
 
 
