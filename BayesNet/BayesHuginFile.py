@@ -90,8 +90,12 @@ def parse_node(node, lex):
 def parse_attrs(lex):
     """Parse attributes of a potential."""
     match_token("(", lex)
-    target = lex.get_token()
-    tok = lex.get_token()
+    targets = []
+    while True:
+        tok = lex.get_token()
+        if tok in ["|", ")", "}"]:
+            break
+        targets.append(tok)
     conditioned_on = []
     if tok == "|":
         tok = lex.get_token()
@@ -99,7 +103,7 @@ def parse_attrs(lex):
             conditioned_on.append(tok)
             tok = lex.get_token()
     check_token(")", tok, lex)
-    return (target, conditioned_on)
+    return (targets, conditioned_on)
 
 class HuginNode(object):
     def __init__(self, _class, name, node_type = "discrete"):
@@ -107,13 +111,13 @@ class HuginNode(object):
         self.node_type = node_type
         self.name = name
         self.params = {}
-        self.target = None
+        self.targets = None
         self.conditioned_on = None
     def __str__(self):
         ret = ""
         ret += self._class + " " + self.node_type + " " + self.name
-        if self.target != None:
-            ret += "(%s | %s)" % (self.target, str(self.conditioned_on))
+        if self.targets != None:
+            ret += "(%s | %s)" % (self.targets, str(self.conditioned_on))
         ret += "\n" + str(self.params)
         return ret
     def __repr__(self):
@@ -137,7 +141,7 @@ def parse_net(net, lex):
             nodename = tok
         node = HuginNode(nodeclass, nodename, nodetype)
         if nodeclass == "potential":
-            node.target = attrs[0]
+            node.targets = attrs[0]
             node.conditioned_on = attrs[1]
         parse_node(node, lex)
         net.append(node)
@@ -186,7 +190,7 @@ def read_Hugin_file(file_name):
     for p in net:
         if p._class == "potential":
             shape = []
-            for a in p.conditioned_on + [p.target]:
+            for a in p.conditioned_on + p.targets:
                 shape.append(len(domains[a]))
             if 'data' in p.params:
                 distr = numpy.array(p.params['data'])
@@ -196,11 +200,18 @@ def read_Hugin_file(file_name):
                     nor.add_variable(vname, prb)
                 distr = nor.get_table()
             else:
-                raise RuntimeError("No distribution for node " + str(ids_2_names[p.target]))
+                raise RuntimeError("No distribution for node " + str(ids_2_names[p.targets[0]]))
             distr.shape = shape
+            targets = [ids_2_numbers[c] for c in p.targets]
             conditioned_on = [ids_2_numbers[c] for c in p.conditioned_on]
-            
-            bn[ids_2_numbers[p.target]].set_parents_distr(conditioned_on, distr)
+            if len(targets) == 1:  # ordinary node
+                bn[targets[0]].set_parents_distr(conditioned_on, distr)
+            else:
+                # joint node
+                if len(conditioned_on) > 0:
+                    raise RuntimeError("Joint nodes cannot have parents.")
+                bn.addJointDistr(targets)
+                print("Warning!!!: joint potential distributions not read yet.")
     return bn
 
 

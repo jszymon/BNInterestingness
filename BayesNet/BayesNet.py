@@ -117,7 +117,7 @@ class BayesNet(AttrSet):
         dst_node.distr = np.sum(dst_node.distr, dst_node.parents.index(i)) / 2
         del dst_node.parents[dst_node.parents.index(i)]
 
-    def addJointDistr(self, node_names):
+    def addJointDistr(self, nodes):
         """Declares that given nodes will be modeled using their joint
         distribution.
 
@@ -127,7 +127,10 @@ class BayesNet(AttrSet):
         raised).
 
         """
-        ni = self.names_to_numbers(node_names)
+        if len(nodes) > 0 and isinstance(nodes[0], str):
+            ni = self.names_to_numbers(nodes)
+        else:
+            ni = nodes
         for i in ni:
             name = self.numbers_to_names([i])[0]
             # check that nodes are not already in a joint distribution.

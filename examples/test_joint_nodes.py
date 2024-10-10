@@ -45,8 +45,14 @@ print(bn)
 print(bn.P([0,0,0]))
 print(distr_2_str(bn.jointP()))
 
+print("read/write to file")
 f=NamedTemporaryFile(mode="w+")
 write_Hugin_file(bn, f)
 print(f.name)
 f.seek(0)
 print(f.read())
+
+bn2 = read_Hugin_file(f.name)
+print(bn2)
+
+f.close()
