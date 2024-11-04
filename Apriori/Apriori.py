@@ -1,7 +1,4 @@
 import Utils.SEtree
-import DataAccess.ArffFileReader
-#import record_to_itemset_scanner
-#import RuleBase
 
 
 class Apriori:
