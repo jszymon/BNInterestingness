@@ -5,16 +5,14 @@ import numpy
 import itertools
 import random
 import sys
+import time
 
 sys.path.append("..")
 
 from DataAccess import create_arff_reader
 from BayesNet import BayesNet, read_Hugin_file, write_Hugin_file
 import BayesNet.BayesNetLearn
-import Apriori.AprioriDistr
-import time
 from ExactInterestingness import BN_interestingness_exact
-from SamplingInterestingness import BN_interestingness_sample
 
 
 
@@ -51,7 +49,7 @@ def read_bn_network(base_name):
 def print_attr_sets_with_inter(attr_sets_w_inter, maxlen = 10000, maxN = 10, must_contain_attrno = None,
                                mode = ["attrset"], bn_interestingness = None):
     asets_selected = [x for x in attr_sets_w_inter if len(x[0]) <= maxlen]
-    if must_contain_attrno != None:
+    if must_contain_attrno is not None:
         asets_selected = [x for x in asets_selected if must_contain_attrno in x[0]]
     for aset, inter in [(a,i) for a, i in asets_selected][:maxN]:
         if "attrset" in mode:
@@ -82,11 +80,11 @@ def topoPrune(bn, attr_sets_w_inter, mininter):
         ancestors.update(asetnames)
         ancestorsnumbers = bn.attrNames2Numbers(ancestors)
         #print(asetnames, ancestors)
-        l = list(setree.iter_included(ancestorsnumbers))
-        l = [a for a in l if not set(a) ==  set(aset)] # this does topo + hierarchical
-        #l = [a for a in l if not set(a).issuperset(set(aset))] # this does topo + hierarchical
-        #l = [a for a in l if not set(a).issuperset(set(aset)) and not set(a).issubset(set(aset))] # just topo
-        if len(l) == 0:
+        L = list(setree.iter_included(ancestorsnumbers))
+        L = [a for a in L if not set(a) == set(aset)] # this does topo + hierarchical
+        #L = [a for a in L if not set(a).issuperset(set(aset))] # this does topo + hierarchical
+        #L = [a for a in L if not set(a).issuperset(set(aset)) and not set(a).issubset(set(aset))] # just topo
+        if len(L) == 0:
             pruned.append((aset, inter))
     return pruned
 #--------------------------------
@@ -125,7 +123,7 @@ def buildNetworkInteractively(bn, data_scanner):
     must_contain_attr = None # attribute that displayed attrsets must contain
     nattrsets = 10
     maxlen = 1000
-    while quit != True:
+    while not quit:
         bn.validate()
         ds.rewind()
         BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
@@ -146,7 +144,7 @@ def buildNetworkInteractively(bn, data_scanner):
 
         while True:
             attrnames = [n.name for n in bn]
-            if must_contain_attr != None:
+            if must_contain_attr is not None:
                 must_contain_no = bn.names_to_numbers([must_contain_attr])[0]
             else:
                 must_contain_no = None
@@ -162,26 +160,26 @@ def buildNetworkInteractively(bn, data_scanner):
             print("7. set 'must have' attribute")
             print("8. save network")
             print("Q. quit")
-            choice = raw_input("-->")
+            choice = input("-->")
             if choice in ["q", "Q"]:
                 quit = True
                 break
             elif choice == "3":
-                maxlen = int(raw_input("Enter max length: "))
+                maxlen = int(input("Enter max length: "))
             elif choice == "1":
-                src = raw_input("Enter from attribute: ")
+                src = input("Enter from attribute: ")
                 if src not in attrnames:
                     print("wrong attribute name")
                     continue
-                dst = raw_input("Enter to attribute: ")
+                dst = input("Enter to attribute: ")
                 if dst not in attrnames:
                     print("wrong attribute name")
                     continue
                 bn.addEdge(src, dst)
                 break
             elif choice == "2":
-                src = raw_input("Enter from attribute: ")
-                dst = raw_input("Enter to attribute: ")
+                src = input("Enter from attribute: ")
+                dst = input("Enter to attribute: ")
                 bn.delEdge(src, dst)
                 break
             elif choice == "4":
@@ -191,11 +189,11 @@ def buildNetworkInteractively(bn, data_scanner):
                 print(bn)
             elif choice == "6":
                 try:
-                    nattrsets = int(raw_input("Enter number of attrsets shown: "))
+                    nattrsets = int(input("Enter number of attrsets shown: "))
                 except ValueError:
                     print("not an integer")
             elif choice == "7":
-                must_contain_attr = raw_input("Enter the 'must contain' attribute: ").strip()
+                must_contain_attr = input("Enter the 'must contain' attribute: ").strip()
                 if must_contain_attr == "":
                     must_contain_attr = None
                 if must_contain_attr not in attrnames:
@@ -203,11 +201,10 @@ def buildNetworkInteractively(bn, data_scanner):
                     must_contain_attr = None
                     continue
             elif choice == "8":
-                fname = raw_input("Enter file name: ")
-                of = file(fname, "wU")
+                fname = input("Enter file name: ")
+                of = open(fname, "w")
                 write_Hugin_file(bn, of)
                 of.close()
-                continue
             else:
                 print("Wrong choice")
     
@@ -281,7 +278,7 @@ if __name__ == "__main__":
     except BayesNet.BayesHuginFile.BNReadError as bne:
         print(str(bne))
         BNread = False
-    if BNread == False:
+    if not BNread:
         print("assuming independent structure")
         bn = BayesNet.BayesNet.BayesNet(ds.filename, [a.name for a in ds.attrset], [a.domain for a in ds.attrset])
         BayesNet.BayesNetLearn.makeIndependentStructure(bn)

@@ -2,11 +2,9 @@ import numpy as np
 
 from BayesNet import BayesNet
 from BayesNet import BayesSampler
-
-from BayesNet import BayesNode, BayesNet
 from BayesNet import distr_2_str
 
-from DataAccess import Attr, RecordReader
+from DataAccess import Attr
 
 
 if __name__ == "__main__":

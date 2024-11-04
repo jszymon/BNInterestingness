@@ -5,14 +5,14 @@ import itertools
 import sys
 import time
 
-import numpy
+import numpy as np
 
 from .AttrSetCover import AttrSetCover
 
 def dict_to_numpy(shape, distr):
     """Convert a dictionary counts for an attribute set to a numpy
     counts."""
-    ndistr = numpy.zeros(shape)
+    ndistr = np.zeros(shape)
     for values, P in distr.items():
         ndistr[values] = P
     return ndistr
@@ -79,11 +79,8 @@ def marginalize_numpy(a, vars, targetvars):
 
     Deistributions are represented as numpy arrays."""
     vars = list(vars)
-    axeslist = [vars.index(x) for x in set(vars) - set(targetvars)]
-    axeslist.sort()
-    axeslist.reverse()
-    for i in axeslist:
-        a = numpy.array(numpy.sum(a, i))
+    axeslist = tuple(vars.index(x) for x in set(vars) - set(targetvars))
+    a = np.sum(a, axis=axeslist)
     return a
 
 

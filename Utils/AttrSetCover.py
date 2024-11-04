@@ -49,14 +49,16 @@ def AttrSetCover(U, sets, query_cost_function, marginalization_cost_function, me
 
             elem_gains = {}
             for e in U:
-                if e in best_s: continue
+                if e in best_s:
+                    continue
                 elem_gain = -query_cost_function(best_s + [e])
                 for s in included_sets:
                     elem_gain += query_cost_function(s) - marginalization_cost_function(best_s + [e], s)
                 elem_gains[e] = elem_gain
             for set, e in setree.iter_one_not_in(best_s):
                 #print(best_s, set,)
-                if e in best_s: print("!!!!ERROR!!!!")
+                if e in best_s:
+                    print("!!!!ERROR!!!!")
                 elem_gains[e] += query_cost_function(set) - marginalization_cost_function(best_s + [e], set)
 
             for e, gain in elem_gains.items():

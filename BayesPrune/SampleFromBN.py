@@ -7,8 +7,6 @@ import sys
 import itertools
 import random
 
-import DataAccess.ArffFileReader
-import Apriori.AprioriDistr
 import BayesNet.BayesNet
 import BayesNet.BayesHuginFile
 import BayesNet.BayesNetApprox
@@ -32,22 +30,22 @@ if __name__ == "__main__":
     if outfile == "-":
         of = sys.stdout
     else:
-        of = file(outfile, "w")
+        of = open(outfile, "w")
     bn = BayesNet.BayesHuginFile.read_Hugin_file(filename)
-    print len(bn), "nodes"
-    #print bn
+    print(len(bn), "nodes")
+    #print(bn)
     bn.normalizeProbabilities()
     bn.validate()
 
     # header
     if arff:
-        print >>of, "@RELATION no-name"
+        print("@RELATION no-name", file=of)
         for a in bn:
-            print >>of, "@ATTRIBUTE", a.attrname, "{", ",".join(a.attrdomain), "}"
-        print >>of, "@DATA"
+            print("@ATTRIBUTE", a.attrname, "{", ",".join(a.attrdomain), "}", file=of)
+        print("@DATA", file=of)
         sep = ","
     else:
-        print >>of,sep.join(bn.attrnames)
+        print(sep.join(bn.attrnames), file=of)
 
 
     # data
@@ -55,8 +53,8 @@ if __name__ == "__main__":
     for i in range(N):
         row = sampler.next()
         rowstr = ["'"+attr.attrdomain[x]+"'" for attr, x in itertools.izip(bn, row)]
-        print >>of,sep.join(rowstr)
+        print(sep.join(rowstr), file=of)
         if i % 1000 == 0:
-            print "row", i
+            print("row", i)
             sys.stdout.flush()
     of.close()

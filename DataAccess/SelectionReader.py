@@ -1,13 +1,16 @@
 from .RecordReader import RecordReader
 
+def _true_func(x):
+    return True
+
 class SelectionReader(RecordReader):
     """Wraps around a reader in such a way that a subset of readers
     records is read."""
     def __init__(self, reader, condition = None):
         """reader is the wrapped reader, attrs is a list of numbers of
         attributes to return."""
-        if condition == None:
-            condition = lambda x: True
+        if condition is None:
+            condition = _true_func
         self.reader = reader
         self.condition = condition
         super(SelectionReader, self).__init__(self.reader.get_attr_set())

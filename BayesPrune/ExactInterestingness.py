@@ -6,7 +6,6 @@ import sop.cached_sop
 from .DiscreteDistr import DiscreteDistrSOP
 
 import Apriori
-import Apriori.AprioriDistr
 from .DDApriori import DDApriori
 
 
@@ -65,7 +64,8 @@ class BN_interestingness_exact(object):
             for a, d in f.items():
                 self.attrsets[a] = d
         print(len(self.attrsets), "frequent attribute sets in data")
-        if self.apriori.debug > 1: print(self.attrsets)
+        if self.apriori.debug > 1:
+            print(self.attrsets)
         self.apriori.computePositiveBorder()
 
 

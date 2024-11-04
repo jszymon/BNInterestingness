@@ -104,8 +104,8 @@ class array_sop(sop_base):
         def result_size(self):
             """See below."""
             size = 1
-            for l in self.array.shape:
-                size *= l
+            for d in self.array.shape:
+                size *= d
             return size
         def mem_cost(self):
             return self.array.nbytes
@@ -121,9 +121,9 @@ class array_sop(sop_base):
             prod = numpy.array(1)
             all_vars = []
             # sort products on size for faster mults
-            l = [(x.result_size(), x) for x in self.product]
-            l.sort(key = lambda x: x[0])
-            sp = [x[1] for x in l]
+            L = [(x.result_size(), x) for x in self.product]
+            L.sort(key = lambda x: x[0])
+            sp = [x[1] for x in L]
             for p in sp:
                 tmp_array = p.compute(values)
                 old_all_vars = copy.copy(all_vars)

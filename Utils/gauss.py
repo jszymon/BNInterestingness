@@ -2,13 +2,7 @@
 # based on GSL routine
 
 import math
-try:
-    import pygsl.sf
-    have_gsl = True
-except:
-    have_gsl = False
 
-# 
 # Computes the cumulative distribution function for the Gaussian
 # distribution using a rational function approximation.  The
 # computation is for the standard Normal distribution, i.e., mean 0
@@ -172,7 +166,7 @@ def cdf_ugaussian_P (x):
         result = 0.0
         return result
     else:
-        result = gauss_large (x);
+        result = gauss_large (x)
         if x > 0.0:
             result = 1.0 - result
   
@@ -180,7 +174,7 @@ def cdf_ugaussian_P (x):
 
 
 def cdf_ugaussian_Q (x):
-    absx = abs (x);
+    absx = abs (x)
   
     if absx < GAUSS_EPSILON:
         result = 0.5
@@ -193,7 +187,7 @@ def cdf_ugaussian_Q (x):
             result = 0.5 - result
         return result
     elif absx < SQRT32:
-        result = gauss_medium (x);
+        result = gauss_medium (x)
         if x < 0.0:
             result = 1.0 - result  
         return result
@@ -232,7 +226,7 @@ TEST_TOL6 = (1048576.0*GSL_DBL_EPSILON)
 def TEST(func, arg, value, tol):
     res = func(*arg)
     if(abs(value - res) > tol):
-        print "error", arg, value, res, tol
+        print("error", arg, value, res, tol)
 
 
 if __name__ == "__main__":

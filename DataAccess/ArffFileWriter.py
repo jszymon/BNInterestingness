@@ -1,4 +1,3 @@
-from .AttrSet import Attr, AttrSet
 from .ArffFileReader import read_arff_attrset
 
 def make_arff_header(aset, quote_char = ""):

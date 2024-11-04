@@ -11,7 +11,7 @@ class ListOfRecordsReader(RecordReader):
     def rewind(self):
         try:
             self.data.rewind()
-        except:
+        except RuntimeError:
             pass
         self.i = iter(self.data)
 

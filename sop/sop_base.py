@@ -50,7 +50,7 @@ class sop_base(object):
             for f in self.product:
                 f.bucket_elim(self)
             # move children from b to parent if possible
-            if parent != None:
+            if parent is not None:
                 for f in copy.copy(self.product):
                     if self.var not in f.vars:
                         parent.product.append(f)
@@ -59,7 +59,8 @@ class sop_base(object):
             self.vars = []
             for f in self.product:
                 for v in f.vars:
-                    if v not in self.vars: self.vars.append(v)
+                    if v not in self.vars:
+                        self.vars.append(v)
             self.vars = [v for v in self.vars if v != self.var]
             self.vars.sort()
         def str_rec(self, depth):

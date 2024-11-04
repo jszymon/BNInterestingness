@@ -32,11 +32,11 @@ def topSort(bn):
     indegrees = {}
     S = []  # list of nodes with in-degrees ==0
     for i, n in enumerate(bn):
-        l = len(n.parents)
-        if l == 0:
+        L = len(n.parents)
+        if L == 0:
             S.append(i)
         else:
-            indegrees[i] = l
+            indegrees[i] = L
     while len(S) > 0:
         i = S.pop()
         sorted.append(i)

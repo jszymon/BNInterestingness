@@ -1,18 +1,14 @@
 import math
-import time
 import itertools
 import tempfile
 import os
-import sys
-import gc
 
-import numpy
+import numpy as np
 import Utils.gaussinv
 import Utils.Counts
 import Utils.AttrSetCover
 from DataAccess import ProjectionReader
 from DataAccess import SelectionReader
-from BayesNet import BayesNet
 from BayesNet import BayesSampler
 
 
@@ -87,9 +83,9 @@ class attr_set(object):
         self.__update_fields()
 
         self.N_data = 0 #how many samples used to count from data
-        self.counts_data = numpy.zeros(self.shape)
+        self.counts_data = np.zeros(self.shape)
         self.N_model = 0 #how many samples used to count from model
-        self.counts_model = numpy.zeros(self.shape)
+        self.counts_model = np.zeros(self.shape)
 
         self.inter = None
         self.inter_ci = None
@@ -116,9 +112,9 @@ class attr_set(object):
         #self.N_data = int(f.readline())
         self.N_model = int(f.read(12))
         self.N_data = int(f.read(12))
-        cnt = numpy.prod(self.shape)
-        self.counts_model = numpy.reshape(numpy.fromfile(f, float, cnt), self.shape)
-        self.counts_data  = numpy.reshape(numpy.fromfile(f, float, cnt), self.shape)
+        cnt = np.prod(self.shape)
+        self.counts_model = np.reshape(np.fromfile(f, float, cnt), self.shape)
+        self.counts_data  = np.reshape(np.fromfile(f, float, cnt), self.shape)
     def clear_data(self):
         del self.shape
         del self.domsize
@@ -129,7 +125,7 @@ class attr_set(object):
         
 
     def compute_interestingness(self, delta):
-        self.inter = (numpy.abs(self.counts_model/self.N_model - self.counts_data/self.N_data)).max()
+        self.inter = (np.abs(self.counts_model/self.N_model - self.counts_data/self.N_data)).max()
         if self.sample_from_data:
             z = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
             pM = self.counts_model / self.N_model
@@ -239,7 +235,7 @@ class BN_interestingness_sample(object):
         self.nattrs = len(self.ds.attrset)
         self.sample_from_data = sample_from_data
         if self.sample_from_data:
-            if ND == None: # find database size
+            if ND is None: # find database size
                 ND = 0
                 for x in self.ds:
                     ND += 1
@@ -345,7 +341,7 @@ class BN_interestingness_sample(object):
             minsT, npruned = self.prune(UB, delta, epsilon)
 
             prtLB = LB
-            if LB == None:
+            if LB is None:
                 prtLB = 1e10
             print("N_bn=",self.N_bn,"self.minN_bn=",self.minN_bn, "|H|=%d" % len(self.H),\
                   "|C|=%d" % len(self.C), ("LB=%7.5f" % prtLB), ("UB=%7.5f" % UB))
@@ -354,7 +350,8 @@ class BN_interestingness_sample(object):
             finish = False
             if len(self.C) == 0:
                 finish = self.accept_good_candidates(LB, UB, epsilon)
-            if finish: break
+            if finish:
+                break
             ### reject bad candidates
             if len(self.C) == 0:
                 self.reject_bad_candidates(UB, delta, epsilon)
@@ -422,7 +419,7 @@ class BN_interestingness_sample(object):
 
             a tolerance margin of epsilon is allowed."""
             # read distributions from disk if necessary
-            if tmp_file != None:
+            if tmp_file is not None:
                 tmp_file.seek(h1.offset)
                 h1 = h1.fromfile(tmp_file)
                 tmp_file.seek(h2.offset)
@@ -454,7 +451,7 @@ class BN_interestingness_sample(object):
             if Hs[ind].supp < self.H[self.n-1].inter:
                 h1 = self.H[self.n-1]
                 h2 = Hs[ind]
-                if tmp_file != None:
+                if tmp_file is not None:
                     tmp_file.seek(h1.offset)
                     h1 = h1.fromfile(tmp_file)
                     tmp_file.seek(h2.offset)
@@ -538,7 +535,7 @@ class BN_interestingness_sample(object):
             #self.minN_data += N
             #self.N_data += N
         else:
-            if self.candidates_generated == True:
+            if self.candidates_generated:
                 self.ds.rewind()
                 sample_data = list(self.ds)
                 counts_data, N_data, missing_counts = Utils.Counts.compute_counts_array_cover(asets, sample_data, self.nattrs, domsizes, maxN = -1)
@@ -617,7 +614,7 @@ class BN_interestingness_sample(object):
 
 
     def accept_good_candidates(self, LB, UB, epsilon):
-        if LB != None and UB >= LB - epsilon:
+        if LB is not None and UB >= LB - epsilon:
             print("!!!!!Good ones accepted!!!!!")
             return True
         return False
@@ -717,14 +714,14 @@ class BN_interestingness_sample(object):
             if h2.key == aset:
                 h = h2
                 break
-        if h == None:
+        if h is None:
             raise RuntimeError("attrset not found")
 
         if self.disk_storage:
             tmp_file = self.tmp_file
         else:
             tmp_file = None
-        if tmp_file != None:
+        if tmp_file is not None:
             tmp_file.seek(h.offset)
             h = h.fromfile(tmp_file)
 

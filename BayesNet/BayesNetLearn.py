@@ -1,15 +1,15 @@
 """Functions related to learning Bayesian networks."""
 
 import operator
-import numpy
+import numpy as np
 from math import exp
 from math import lgamma
-
+from functools import reduce
 
 from Utils import compute_counts_array
 
-from DataAccess import Attr, AttrSet
-from BayesNet import BayesNode, BayesNet
+from DataAccess import Attr
+from BayesNet import BayesNet
 from .BNutils import blockiter, distr_2_str
 
 
@@ -19,8 +19,8 @@ def learnProbabilitiesFromData(bn, dataset, priorN = 1):
     for j, n in enumerate(bn):
         c = counts[tuple(n.parents + [j])]
         ri = len(n.domain)
-        rdistr = numpy.ravel(n.distr)
-        rcount = numpy.ravel(c)
+        rdistr = np.ravel(n.distr)
+        rcount = np.ravel(c)
         i = 0
         while i < len(rdistr):
             sum = 0
@@ -49,7 +49,7 @@ def lnP_dataset_cond_network_structure(bn, dataset, priorN = None):
     counts, N, missing_counts = compute_counts_array(asets, bn.get_shape(), dataset)
 
 
-    if priorN == None:
+    if priorN is None:
         priorN = float(sum([len(n.domain) for n in bn])) / 2 / len(bn)
     priorN = float(priorN)
 
@@ -59,7 +59,7 @@ def lnP_dataset_cond_network_structure(bn, dataset, priorN = None):
         ri = len(n.domain)
         qi = reduce(operator.mul, [len(bn[i].domain) for i in n.parents], 1)
         #print i, n.parentnumbers, c, ri, qi
-        for nodeattrcounts in blockiter(numpy.ravel(c), ri): # for j = 1 to q_i
+        for nodeattrcounts in blockiter(np.ravel(c), ri): # for j = 1 to q_i
             Nij = sum(nodeattrcounts)
             #print "-->",nodeattrcounts
             lnP += lgamma(float(priorN) / qi) \
@@ -77,7 +77,7 @@ def makeIndependentStructure(bn):
     I.e. remove all edges."""
     for node in bn:
         n = len(node.domain)
-        node.set_parents_distr([], numpy.zeros(n) + 1.0/n)
+        node.set_parents_distr([], np.zeros(n) + 1.0/n)
 
 
 
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                    Attr('B', "CATEG", [0,1]),
                    Attr('Y', "CATEG", [0,1,2])])
     print(bn)
-    bn['Y'].set_parents_distr(['B'], numpy.array([[0.7,0.1,0.2],[0.5,0.3,0.2]]))
+    bn['Y'].set_parents_distr(['B'], np.array([[0.7,0.1,0.2],[0.5,0.3,0.2]]))
     print(bn)
     print(bn.P([0,0,0]))
     print(distr_2_str(bn.jointP()))

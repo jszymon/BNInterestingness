@@ -30,7 +30,7 @@ class Attr(object):
         self.type = attr_type
         self.domain = domain
         if self.type not in attrtypes:
-            raise RuntimeError, "Wrong attribute type"
+            raise RuntimeError("Wrong attribute type")
         if self.type == "CATEG" and self.domain is None:
             self.domain = []
 
@@ -72,7 +72,7 @@ class AttrSet(object):
         """Converts a list of attribute names to a list of attribute
         numbers."""
         if isinstance(attrnames, str):
-            raise RuntimeError, "names_to_numbers: need a list of attribute names"
+            raise RuntimeError("names_to_numbers: need a list of attribute names")
         return [self.names_2_numbers_map[aname] for aname in attrnames]
     def numbers_to_names(self, attrnumbers):
         """Converts a list of attribute numbers to a list of attribute
@@ -93,14 +93,14 @@ class AttrSet(object):
 
 if __name__ == "__main__":
     aset = AttrSet("test", [Attr("a1", "STRING")])
-    print aset
-    print
+    print(aset)
+    print()
     aset.append_attr(Attr("a2", "CATEG", ["v1", "v2", "v3"]))
     aset.append_attr(Attr("a3", "CONTINUOUS"))
     aset.append_attr(Attr("a4", "CATEG", ["a", "b", "c"]))
-    print aset
+    print(aset)
 
-    print
-    print aset.names_to_numbers([a.name for a in aset])
-    print aset.numbers_to_names(range(len(aset)))
+    print()
+    print(aset.names_to_numbers([a.name for a in aset]))
+    print(aset.numbers_to_names(range(len(aset))))
     

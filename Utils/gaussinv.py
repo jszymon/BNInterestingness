@@ -3,12 +3,6 @@
 
 
 import math
-try:
-    import pygsl.sf
-    have_gsl = True
-except:
-    have_gsl = False
-
 
 # Computes the inverse normal cumulative distribution function 
 # according to the algorithm shown in 
@@ -106,7 +100,7 @@ def cdf_ugaussian_Pinv(P):
 
 
 def cdf_ugaussian_Qinv(Q):
-    dQ = Q - 0.5;
+    dQ = Q - 0.5
 
     if Q == 1.0:
         return float('-Inf')

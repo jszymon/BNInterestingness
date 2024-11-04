@@ -15,7 +15,6 @@ import itertools
 import copy
 
 import DataAccess.ArffFileReader
-import Apriori.AprioriDistr
 import BayesNet.BayesNet
 import BayesNet.BayesNetLearn
 import BayesNet.BayesHuginFile
@@ -32,7 +31,7 @@ if __name__ == "__main__":
     if outfile == "-":
         of = sys.stdout
     else:
-        of = file(outfile, "w")
+        of = open(outfile, "w")
     dombn = BayesNet.BayesHuginFile.read_Hugin_file(domainsnetwork)
     conbn = BayesNet.BayesHuginFile.read_Hugin_file(connectionsnetwork)
     # target network with domain from dombn and connections from conbn

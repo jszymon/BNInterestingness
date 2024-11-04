@@ -1,12 +1,11 @@
 """Classes for handling multivariate discrete distributions."""
 
-import sop.sop
-import numpy
+import numpy as np
 import Utils.SEtree
 import Utils.Counts
 import random
 
-class DiscreteDistrSOP(object):
+class DiscreteDistrSOP:
     """A multivariate discrete distribution represented as a sum of
     products.
 
@@ -26,7 +25,7 @@ class DiscreteDistrSOP(object):
         for i in range(len(vars)):
             subset = vars[0:i] + vars[i+1:]
             if subset not in self.cache:
-                subdistr = numpy.array(numpy.sum(distr, i))
+                subdistr = np.array(np.sum(distr, i))
                 self.cache[subset] = subdistr
         
 
@@ -75,7 +74,7 @@ class DiscreteDistrSOP(object):
             benefit -= (superset_res_size / res_size - 1) * res_size
         # if just the set itself is computed, benefit is 0
         # this is a hack to compensate for small negative return values
-        if hasSubsets == False:
+        if not hasSubsets:
             benefit = 0
         return benefit
 
@@ -96,7 +95,8 @@ class DiscreteDistrSOP(object):
             random.shuffle(s)
             s = s[0:10]
             for v in s:
-                if v in superset: continue
+                if v in superset:
+                    continue
                 tmp = superset + [v]
                 tmp.sort()
                 benefit = self.benefit(tmp, setree)

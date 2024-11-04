@@ -1,5 +1,5 @@
 from __future__ import generators
-from copy import *
+from copy import copy
 
 class SEtree(object):
     """Set Enumeration tree class"""
@@ -14,7 +14,7 @@ class SEtree(object):
             self.len += 1
     def __getitem__(self, set):
         cur = self.__get_node(set)
-        if cur.has_item == False:
+        if not cur.has_item:
             raise KeyError("SEtree: " + repr(set))
         return cur.item
     def __contains__(self, set):
@@ -26,13 +26,13 @@ class SEtree(object):
         return True
     def __delitem__(self, set):
         cur = self.__get_node(set)
-        if cur.has_item == False:
+        if cur.has_item is False:
             raise KeyError("SEtree: " + repr(set))
         cur.item = None
         cur.has_item = False
 
         # remove unused nodes
-        while cur != None and cur.has_item == False and cur.children == None and cur.parent != None:
+        while cur is not None and not cur.has_item and cur.children is None and cur.parent is not None:
             del cur.parent.children[set[-1]]
             if len(cur.parent.children) == 0:
                 cur.parent.children = None
@@ -45,9 +45,9 @@ class SEtree(object):
     def __iter__(self):
         return self.__iter_generator(self.root, [])
     def __iter_generator(self, node, prefix):
-        if node.has_item == True:
+        if node.has_item:
             yield tuple(prefix)
-        if not node.children == None:
+        if node.children is not None:
             keys = list(node.children.keys())
             keys.sort()
             for e in keys:
@@ -59,9 +59,9 @@ class SEtree(object):
     def items(self):
         return self.__iteritems_generator(self.root, [])
     def __iteritems_generator(self, node, prefix):
-        if node.has_item == True:
+        if node.has_item:
             yield (tuple(prefix), node.item)
-        if not node.children == None:
+        if node.children is not None:
             keys = list(node.children.keys())
             keys.sort()
             for e in keys:
@@ -73,9 +73,9 @@ class SEtree(object):
     #def iter_included(self, superset):
     #    return self.__iter_included_generator(self.root, superset, [])
     def __iter_included_generator(self, node, superset, prefix):
-        if node.has_item == True:
+        if node.has_item:
             yield tuple(prefix)
-        if not node.children == None:
+        if node.children is not None:
             for e in superset:
                 if e in node.children:
                     prefix.append(e)
@@ -96,11 +96,11 @@ class SEtree(object):
                 if len(self.stack) == 0:
                     raise StopIteration
                 node, prefix = self.stack.pop()
-                if not node.children == None:
+                if node.children is not None:
                     for e in self.superset:
                         if e in node.children:
                             self.stack.append((node.children[e], prefix + [e]))
-                if node.has_item == True:
+                if node.has_item:
                     return tuple(prefix)
 
 
@@ -124,7 +124,7 @@ class SEtree(object):
                 if len(self.stack) == 0:
                     raise StopIteration
                 node, prefix, not_in, elem_not_in = self.stack.pop()
-                if not node.children == None:
+                if node.children is not None:
                     if not_in == 1:
                         for e in self.superset:
                             if e in node.children:
@@ -135,7 +135,7 @@ class SEtree(object):
                                 self.stack.append((node.children[e], prefix + [e], not_in, None))
                             else:
                                 self.stack.append((node.children[e], prefix + [e], not_in + 1, e))
-                if not_in == 1 and node.has_item == True:
+                if not_in == 1 and node.has_item:
                     return tuple(prefix), elem_not_in
         
 
@@ -143,10 +143,12 @@ class SEtree(object):
 
 
     def get(self, k, x = None):
-        if k in self: return self[k]
+        if k in self:
+            return self[k]
         return x
     def setdefault(self, k, x=None):
-        if not k in self: self[k] = x
+        if k not in self:
+            self[k] = x
         return self[k]
     def popitem(self):
         if len(self) == 0:
@@ -168,7 +170,8 @@ class SEtree(object):
     def copy(self):
         return copy(self)
     def update(self, b):
-        for k in b.keys(): self[k] = b[k]
+        for k in b.keys():
+            self[k] = b[k]
     def __str__(self):
         ret = "SE Tree:\n"
         ret += "\n".join([str(x)+" --> "+str(self[x]) for x in self])
@@ -206,7 +209,7 @@ class SEtree_node(object):
             ret = not self.has_item
             self.has_item = True
             return ret
-        if self.children == None:
+        if self.children is None:
             self.children = {}
         if set[0] in self.children:
             child = self.children[set[0]]
@@ -218,7 +221,7 @@ class SEtree_node(object):
 
 
 if __name__ == "__main__":
-    s = SEtree();
+    s = SEtree()
     print(s)
     s[[0,1]] = "x"
     print(s[0,1])

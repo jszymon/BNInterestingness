@@ -9,3 +9,7 @@ from .ArffFileWriter import make_arff_header
 from .ListOfRecordsReader import ListOfRecordsReader
 from .ProjectionReader import ProjectionReader
 from .SelectionReader import SelectionReader
+
+__all__ = (Attr, AttrSet, RecordReader, DelimitedFileReader,
+           read_arff_attrset, create_arff_reader, make_arff_header,
+           ListOfRecordsReader, ProjectionReader, SelectionReader)
