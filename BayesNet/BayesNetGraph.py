@@ -2,7 +2,7 @@
 sorting, cyclicity checks."""
 
 from DataAccess import Attr
-from BayesNet import BayesNode, BayesNet
+from BayesNet import BayesNet
 
 
 def ancestors(bn, nodes):

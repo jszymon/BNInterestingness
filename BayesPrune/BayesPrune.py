@@ -3,7 +3,6 @@
 
 import numpy
 import itertools
-import sets
 import random
 import sys
 
@@ -42,9 +41,9 @@ def read_bn_network(base_name):
     filename = base_name + ".net"
     bn = read_Hugin_file(filename)
     if debug > 1:
-        print bn
+        print(bn)
     elif debug > 0:
-        print len(bn), "nodes in BN"
+        print(len(bn), "nodes in BN")
     return bn
 
 
@@ -56,7 +55,7 @@ def print_attr_sets_with_inter(attr_sets_w_inter, maxlen = 10000, maxN = 10, mus
         asets_selected = [x for x in asets_selected if must_contain_attrno in x[0]]
     for aset, inter in [(a,i) for a, i in asets_selected][:maxN]:
         if "attrset" in mode:
-            print "[" + ",".join([bn_interestingness.ds.attrset[i].name for i in aset]) + "] " + str(inter)
+            print("[" + ",".join([bn_interestingness.ds.attrset[i].name for i in aset]) + "] " + str(inter))
         if "maxcell" in mode:
             inter, distr, edistr = bn_interestingness.compute_attrset_interestingness(aset)
             diff = numpy.abs(distr - edistr)
@@ -65,8 +64,8 @@ def print_attr_sets_with_inter(attr_sets_w_inter, maxlen = 10000, maxN = 10, mus
                 if d >= 0.9 * inter:
                     idomlist = [str(bn_interestingness.ds.attrset[a].domain[v]) for a, v in itertools.izip(aset, i)]
                     istr = ",".join(idomlist)
-                    #print i, distr, edistr
-                    print (istr + " => " + str(d) + "  P^BN=" + str(edistr[i]) +"  P^D=" + str(distr[i]))
+                    #print(i, distr, edistr)
+                    print(istr + " => " + str(d) + "  P^BN=" + str(edistr[i]) +"  P^D=" + str(distr[i]))
 
 def topoPrune(bn, attr_sets_w_inter, mininter):
     # keep only interesting attrsets
@@ -82,11 +81,11 @@ def topoPrune(bn, attr_sets_w_inter, mininter):
         ancestors = BayesNet.BayesNetGraph.ancestors(bn, asetnames)
         ancestors.update(asetnames)
         ancestorsnumbers = bn.attrNames2Numbers(ancestors)
-        #print asetnames, ancestors
+        #print(asetnames, ancestors)
         l = list(setree.iter_included(ancestorsnumbers))
-        l = [a for a in l if not sets.Set(a) ==  sets.Set(aset)] # this does topo + hierarchical
-        #l = [a for a in l if not sets.Set(a).issuperset(sets.Set(aset))] # this does topo + hierarchical
-        #l = [a for a in l if not sets.Set(a).issuperset(sets.Set(aset)) and not sets.Set(a).issubset(sets.Set(aset))] # just topo
+        l = [a for a in l if not set(a) ==  set(aset)] # this does topo + hierarchical
+        #l = [a for a in l if not set(a).issuperset(set(aset))] # this does topo + hierarchical
+        #l = [a for a in l if not set(a).issuperset(set(aset)) and not set(a).issubset(set(aset))] # just topo
         if len(l) == 0:
             pruned.append((aset, inter))
     return pruned
@@ -110,12 +109,12 @@ def testRun(bn):
 
     ### print results
     t2 = time.clock()
-    print "Inter time=" + str(t2-t1)
+    print("Inter time=" + str(t2-t1))
     #print_attr_sets_with_inter(attr_sets_w_inter, 1000, len(attr_sets_w_inter), mode = ["attrset", "maxcell"], bn_interestingness = bn_interestingness)
     # smaller results:
     print_attr_sets_with_inter(attr_sets_w_inter, 1000, len(attr_sets_w_inter), mode = ["attrset"], bn_interestingness = bn_interestingness)
 
-    #print "\nTopological pruning:\n"
+    #print("\nTopological pruning:\n")
     #attr_sets_w_inter = topoPrune(bn, attr_sets_w_inter, 0.01)
     #print_attr_sets_with_inter(attr_sets_w_inter, 1000, len(attr_sets_w_inter))
     
@@ -130,16 +129,16 @@ def buildNetworkInteractively(bn, data_scanner):
         bn.validate()
         ds.rewind()
         BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
-        print "Interestingness with respect to"
-        print bn
-        print BayesNet.BayesNetLearn.lnP_dataset_cond_network_structure(bn, data)
+        print("Interestingness with respect to")
+        print(bn)
+        print(BayesNet.BayesNetLearn.lnP_dataset_cond_network_structure(bn, data))
         t1 = time.clock()
         bn_interestingness = BN_interestingness_exact(bn, ds)
         attr_sets_w_inter = bn_interestingness.run(minsup = minsup, maxK = maxK, apriori_debug = debug)
         #bn_interestingness = BN_interestingness_sample(bn, ds)
         #attr_sets_w_inter = bn_interestingness.run(maxK = maxK)
         t2 = time.clock()
-        print "Inter time=" + str(t2-t1)
+        print("Inter time=" + str(t2-t1))
 
 
         #attr_sets_w_inter = topoPrune(bn, attr_sets_w_inter, 0.01)
@@ -153,16 +152,16 @@ def buildNetworkInteractively(bn, data_scanner):
                 must_contain_no = None
             print_attr_sets_with_inter(attr_sets_w_inter, maxlen, nattrsets, must_contain_attrno = must_contain_no,
                                        mode = ["attrset", "maxcell"], bn_interestingness = bn_interestingness)
-            print
-            print "1. add edge"
-            print "2. delete edge"
-            print "3. limit attrset size"
-            print "4. remove all edges"
-            print "5. print network"
-            print "6. limit number of displayed sets"
-            print "7. set 'must have' attribute"
-            print "8. save network"
-            print "Q. quit"
+            print()
+            print("1. add edge")
+            print("2. delete edge")
+            print("3. limit attrset size")
+            print("4. remove all edges")
+            print("5. print network")
+            print("6. limit number of displayed sets")
+            print("7. set 'must have' attribute")
+            print("8. save network")
+            print("Q. quit")
             choice = raw_input("-->")
             if choice in ["q", "Q"]:
                 quit = True
@@ -172,11 +171,11 @@ def buildNetworkInteractively(bn, data_scanner):
             elif choice == "1":
                 src = raw_input("Enter from attribute: ")
                 if src not in attrnames:
-                    print "wrong attribute name"
+                    print("wrong attribute name")
                     continue
                 dst = raw_input("Enter to attribute: ")
                 if dst not in attrnames:
-                    print "wrong attribute name"
+                    print("wrong attribute name")
                     continue
                 bn.addEdge(src, dst)
                 break
@@ -189,18 +188,18 @@ def buildNetworkInteractively(bn, data_scanner):
                 BayesNet.BayesNetLearn.makeIndependentStructure(bn)
                 break
             elif choice == "5":
-                print bn
+                print(bn)
             elif choice == "6":
                 try:
                     nattrsets = int(raw_input("Enter number of attrsets shown: "))
                 except ValueError:
-                    print "not an integer"
+                    print("not an integer")
             elif choice == "7":
                 must_contain_attr = raw_input("Enter the 'must contain' attribute: ").strip()
                 if must_contain_attr == "":
                     must_contain_attr = None
                 if must_contain_attr not in attrnames:
-                    print "wrong attribute name"
+                    print("wrong attribute name")
                     must_contain_attr = None
                     continue
             elif choice == "8":
@@ -210,7 +209,7 @@ def buildNetworkInteractively(bn, data_scanner):
                 of.close()
                 continue
             else:
-                print "Wrong choice"
+                print("Wrong choice")
     
 
 if __name__ == "__main__":
@@ -279,18 +278,18 @@ if __name__ == "__main__":
     BNread = True
     try:
         bn = read_bn_network(base_name)
-    except BayesNet.BayesHuginFile.BNReadError, bne:
-        print str(bne)
+    except BayesNet.BayesHuginFile.BNReadError as bne:
+        print(str(bne))
         BNread = False
     if BNread == False:
-        print "assuming independent structure"
+        print("assuming independent structure")
         bn = BayesNet.BayesNet.BayesNet(ds.filename, [a.name for a in ds.attrset], [a.domain for a in ds.attrset])
         BayesNet.BayesNetLearn.makeIndependentStructure(bn)
         ds.rewind()
         BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
 
         
-    #print BayesNet.BayesNetLearn.lnP_dataset_cond_network_structure(bn, ds)
+    #print(BayesNet.BayesNetLearn.lnP_dataset_cond_network_structure(bn, ds))
     ds.rewind()
 
     #BayesNet.BayesNetLearn.makeIndependentStructure(bn)
@@ -303,7 +302,7 @@ if __name__ == "__main__":
     #bn.addEdge("ace","ampd1")
     #bn.addEdge("ampd1", "anp12")
     #bn.addEdge("ampd1", "casecon")
-    #print bn
+    #print(bn)
     #ds.rewind()
     #BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
 
@@ -325,7 +324,7 @@ if __name__ == "__main__":
     #bn.addEdge("wiek","BMI")
     ##bn.addEdge("plec","dSS")
     ##bn.addEdge("ACE","dSS")
-    #print bn
+    #print(bn)
     #ds.rewind()
     #BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
 
@@ -374,7 +373,7 @@ if __name__ == "__main__":
     #buildNetworkInteractively(bn, ds)
     testRun(bn)
 
-    #print "Bayes prune"
+    #print("Bayes prune")
     # group itemsets by attribute set
     #groupAndPrintsAttrsets(isets_w_inter, attrnames, domains)
 

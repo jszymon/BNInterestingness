@@ -106,8 +106,6 @@ class attr_set(object):
         self.counts_data += distr
 
     def tofile(self, file):
-        #print >>file, str(self.N_model).rjust(10)
-        #print >>file, str(self.N_data).rjust(10)
         file.write(str(self.N_model).encode().rjust(12))
         file.write(str(self.N_data).encode().rjust(12))
         self.counts_model.tofile(file)
@@ -614,7 +612,7 @@ class BN_interestingness_sample(object):
         self.C = [x for x in self.C if x not in deleted]
         print(len(deleted), "attrsets pruned")
         #for aset in deleted.iterkeys():
-        #    print "infrequent", aset
+        #    print("infrequent", aset)
         return(corrected_minsup, len(deleted))
 
 
@@ -631,7 +629,7 @@ class BN_interestingness_sample(object):
         for h in self.H:
             if len(self.H) - len(deleted) > self.n:
                 if h.inter <= UB - h.inter_ci:
-                    #print "bad", h.key, h.inter
+                    #print("bad", h.key, h.inter)
                     deleted[h.key] = None
         print(len(deleted), "attrsets rejected")
         self.A = [x for x in self.A if x.key not in deleted]
