@@ -2,24 +2,22 @@
 
 
 import numpy
-import random
 import sys
 from os.path import basename, dirname
+import time
 
-from DataAccess import Attr, AttrSet, create_arff_reader
+from DataAccess import Attr, create_arff_reader
 from BayesNet import BayesNet, read_Hugin_file, write_Hugin_file
 import BayesNet.BayesNetLearn
 from BayesNet import topSort
-import Apriori.AprioriDistr
-import time
-import BayesPrune.ExactInterestingness
 from BayesPrune.ExactInterestingness import BN_interestingness_exact
 from BayesPrune.SamplingInterestingness import BN_interestingness_sample
 
-from tkinter import *
-from tkinter.messagebox import *
-from tkinter.filedialog import *
-
+#from tkinter import *
+from tkinter.messagebox import askokcancel, showerror
+from tkinter.filedialog import asksaveasfilename, askopenfilename
+from tkinter import ttk
+import tkinter as tk
 
 global debug
 debug = 0
@@ -39,146 +37,146 @@ maxK = 5
 
 
 
-class PruneGUI(Frame):
+class PruneGUI(ttk.Frame):
     def __init__(self, master = None):
         self.bn = None
         self.ds = None
         self.bn_interestingness = None
 
         self.master = master
-        Frame.__init__(self, self.master)
+        ttk.Frame.__init__(self, self.master)
         self.create_widgets()
         self.create_BN_window()
 
 
     def create_widgets(self):
-        self.pack(fill=BOTH, expand=1)
-        files_grid = Frame(self)
-        files_grid.pack(fill=X)
+        self.pack(fill=tk.BOTH, expand=1)
+        files_grid = ttk.Frame(self)
+        files_grid.pack(fill=tk.X)
 
-        self.data_file_name = StringVar()
+        self.data_file_name = tk.StringVar()
         #self.data_file_name.set("data/ksl_discr.arff")
         self.data_file_name.set("")
-        Label(files_grid, text="Data file").grid()
-        data_file_entry = Entry(files_grid, textvariable = self.data_file_name, width = 60)
+        ttk.Label(files_grid, text="Data file").grid()
+        data_file_entry = ttk.Entry(files_grid, textvariable = self.data_file_name, width = 60)
         data_file_entry.grid(row = 0, column = 1)
-        data_file_button = Button(files_grid, text = "Browse", command = self.get_data_file_name)
+        data_file_button = ttk.Button(files_grid, text = "Browse", command = self.get_data_file_name)
         data_file_button.grid(row = 0, column = 2)
 
-        self.bnet_file_name = StringVar()
+        self.bnet_file_name = tk.StringVar()
         self.bnet_file_name.set("")
-        Label(files_grid, text="Bayes net").grid()
-        bnet_file_entry = Entry(files_grid, textvariable = self.bnet_file_name, width = 60)
+        ttk.Label(files_grid, text="Bayes net").grid()
+        bnet_file_entry = ttk.Entry(files_grid, textvariable = self.bnet_file_name, width = 60)
         bnet_file_entry.grid(row = 1, column = 1)
-        bnet_file_button = Button(files_grid, text = "Browse", command = self.get_bnet_file_name)
+        bnet_file_button = ttk.Button(files_grid, text = "Browse", command = self.get_bnet_file_name)
         bnet_file_button.grid(row = 1, column = 2)
 
         # control frame for algorithm parameters
-        control_frame = Frame(self)
+        control_frame = ttk.Frame(self)
         control_frame.pack()
-        self.method = StringVar()
-        sample_radio = Radiobutton(control_frame, text = "sampling", variable = self.method, value = "Sampling")
-        sample_radio.pack(side = LEFT)
-        exact_radio = Radiobutton(control_frame, text = "exact", variable = self.method, value = "Exact")
-        exact_radio.pack(side = LEFT)
+        self.method = tk.StringVar()
+        sample_radio = ttk.Radiobutton(control_frame, text = "sampling", variable = self.method, value = "Sampling")
+        sample_radio.pack(side = tk.LEFT)
+        exact_radio = ttk.Radiobutton(control_frame, text = "exact", variable = self.method, value = "Exact")
+        exact_radio.pack(side = tk.LEFT)
         self.method.set("Sampling")
         #maxK
-        self.maxK = StringVar()
+        self.maxK = tk.StringVar()
         self.maxK.set("5")
-        Label(control_frame, text = "  max pattern size").pack(side=LEFT)
-        maxK_entry = Entry(control_frame, textvariable = self.maxK, width = 3)
-        maxK_entry.pack(side=LEFT)
+        ttk.Label(control_frame, text = "  max pattern size").pack(side=tk.LEFT)
+        maxK_entry = ttk.Entry(control_frame, textvariable = self.maxK, width = 3)
+        maxK_entry.pack(side=tk.LEFT)
         #minsup
-        self.minsup = StringVar()
+        self.minsup = tk.StringVar()
         self.minsup.set("10")
-        Label(control_frame, text = "  min inter.").pack(side=LEFT)
-        minsup_entry = Entry(control_frame, textvariable = self.minsup, width = 6)
-        minsup_entry.pack(side=LEFT)
+        ttk.Label(control_frame, text = "  min inter.").pack(side=tk.LEFT)
+        minsup_entry = ttk.Entry(control_frame, textvariable = self.minsup, width = 6)
+        minsup_entry.pack(side=tk.LEFT)
         #n
-        self.n = StringVar()
+        self.n = tk.StringVar()
         self.n.set("5")
-        Label(control_frame, text = "  # best patterns to find").pack(side=LEFT)
-        n_entry = Entry(control_frame, textvariable = self.n, width = 4)
-        n_entry.pack(side=LEFT)
+        ttk.Label(control_frame, text = "  # best patterns to find").pack(side=tk.LEFT)
+        n_entry = ttk.Entry(control_frame, textvariable = self.n, width = 4)
+        n_entry.pack(side=tk.LEFT)
         #delta
-        self.delta = StringVar()
+        self.delta = tk.StringVar()
         self.delta.set("0.05")
-        Label(control_frame, text = "  error prob.").pack(side=LEFT)
-        delta_entry = Entry(control_frame, textvariable = self.delta, width = 5)
-        delta_entry.pack(side=LEFT)
+        ttk.Label(control_frame, text = "  error prob.").pack(side=tk.LEFT)
+        delta_entry = ttk.Entry(control_frame, textvariable = self.delta, width = 5)
+        delta_entry.pack(side=tk.LEFT)
 
-        run_button = Button(self, text = "run", command = self.run)
+        run_button = ttk.Button(self, text = "run", command = self.run)
         run_button.pack()
 
         ### list of interesting attrsets
         self.selected_attrs = []
-        listframe = Frame(self)
-        listframe.pack(fill=BOTH, expand=1)
-        yScroll = Scrollbar(listframe, orient=VERTICAL)
-        self.attrset_list = Listbox(listframe, yscrollcommand=yScroll.set)
-        self.attrset_list.pack(fill=BOTH, expand=1, side=LEFT)
+        listframe = ttk.Frame(self)
+        listframe.pack(fill=tk.BOTH, expand=1)
+        yScroll = ttk.Scrollbar(listframe, orient=tk.VERTICAL)
+        self.attrset_list = tk.Listbox(listframe, yscrollcommand=yScroll.set)
+        self.attrset_list.pack(fill=tk.BOTH, expand=1, side=tk.LEFT)
         self.attrset_list.bind("<ButtonRelease-1>", self.attr_set_clicked)
         self.attrset_list.bind("<KeyRelease>", self.attr_set_clicked)
-        yScroll.pack(side=LEFT,fill=Y)
+        yScroll.pack(side=tk.LEFT,fill=tk.Y)
         yScroll["command"] = self.attrset_list.yview
 
         # control frame for display parameters
-        control_frame = Frame(self)
-        control_frame.pack(side=LEFT)
+        control_frame = ttk.Frame(self)
+        control_frame.pack(side=tk.LEFT)
         # max size
-        self.maxSize = StringVar()
+        self.maxSize = tk.StringVar()
         self.maxSize.set("5")
         self.maxSize.trace("w", self.fill_attr_set_list)
-        Label(control_frame, text = "  max shown pattern size").pack(side=LEFT)
-        maxSize_entry = Entry(control_frame, textvariable = self.maxSize, width = 3)
-        maxSize_entry.pack(side=LEFT)
+        ttk.Label(control_frame, text = "  max shown pattern size").pack(side=tk.LEFT)
+        maxSize_entry = ttk.Entry(control_frame, textvariable = self.maxSize, width = 3)
+        maxSize_entry.pack(side=tk.LEFT)
 
         # max size
-        self.mustHave = StringVar()
+        self.mustHave = tk.StringVar()
         self.mustHave.set("")
         self.mustHave.trace("w", self.must_have_attr_changed)
-        Label(control_frame, text = "  must have attr").pack(side=LEFT)
-        mustHave_entry = Entry(control_frame, textvariable = self.mustHave, width = 15)
-        mustHave_entry.pack(side=LEFT)
+        ttk.Label(control_frame, text = "  must have attr").pack(side=tk.LEFT)
+        mustHave_entry = ttk.Entry(control_frame, textvariable = self.mustHave, width = 15)
+        mustHave_entry.pack(side=tk.LEFT)
 
-        self.status_bar = Label(self, text="", bd=1, relief=SUNKEN, anchor=W)
-        self.status_bar.pack(side=TOP, fill=X)
+        self.status_bar = tk.Label(self, text="", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.status_bar.pack(side=tk.TOP, fill=tk.X)
 
     def create_BN_window(self):
-        self.bn_window = Toplevel()
+        self.bn_window = tk.Toplevel()
         self.bn_window.title("Bayesian network")
-        wframe = Frame(self.bn_window)
-        wframe.pack(expand=1, fill=BOTH)
+        wframe = ttk.Frame(self.bn_window)
+        wframe.pack(expand=1, fill=tk.BOTH)
 
-        control_frame = Frame(wframe)
-        control_frame.pack(fill=X, expand=0)
-        addb = Button(control_frame, text = "Add edge", command = self.add_edge)
-        addb.pack(side=LEFT)
-        delb = Button(control_frame, text = "Del edge", command = self.del_edge)
-        delb.pack(side=LEFT)
-        delallb = Button(control_frame, text = "Del all edges", command = self.del_edges)
-        delallb.pack(side=LEFT)
-        saveasb = Button(control_frame, text = "Save as", command = self.save_net)
-        saveasb.pack(side=LEFT)
-        savePSb = Button(control_frame, text = "Save as PS", command = self.save_PS)
-        savePSb.pack(side=LEFT)
-        self.bn_status_bar = Label(control_frame, text="", width=40, bd=1, relief=SUNKEN, anchor=W)
-        self.bn_status_bar.pack(side=LEFT, fill=X, expand=1)
+        control_frame = ttk.Frame(wframe)
+        control_frame.pack(fill=tk.X, expand=0)
+        addb =ttk.Button(control_frame, text = "Add edge", command = self.add_edge)
+        addb.pack(side=tk.LEFT)
+        delb =ttk.Button(control_frame, text = "Del edge", command = self.del_edge)
+        delb.pack(side=tk.LEFT)
+        delallb =ttk.Button(control_frame, text = "Del all edges", command = self.del_edges)
+        delallb.pack(side=tk.LEFT)
+        saveasb =ttk.Button(control_frame, text = "Save as", command = self.save_net)
+        saveasb.pack(side=tk.LEFT)
+        savePSb =ttk.Button(control_frame, text = "Save as PS", command = self.save_PS)
+        savePSb.pack(side=tk.LEFT)
+        self.bn_status_bar = tk.Label(control_frame, text="", width=40, bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.bn_status_bar.pack(side=tk.LEFT, fill=tk.X, expand=1)
 
 
-        bn_frame = Frame(wframe)
-        bn_frame.pack(expand=1, fill=BOTH)
+        bn_frame = ttk.Frame(wframe)
+        bn_frame.pack(expand=1, fill=tk.BOTH)
         bn_frame.rowconfigure(0, weight = 1)
         bn_frame.rowconfigure(1, weight = 0)
         bn_frame.columnconfigure(0, weight = 1)
         bn_frame.columnconfigure(1, weight = 0)
 
-        xScroll = Scrollbar(bn_frame, orient=HORIZONTAL)
-        xScroll.grid(row=1, column = 0, sticky=W+E)
-        yScroll = Scrollbar(bn_frame, orient=VERTICAL)
-        yScroll.grid(row=0, column = 1, sticky=N+S)
-        self.bn_canvas = Canvas(bn_frame, xscrollcommand=xScroll.set, yscrollcommand=yScroll.set)
-        self.bn_canvas.grid(row = 0, column = 0, sticky=NW+SE)
+        xScroll = ttk.Scrollbar(bn_frame, orient=tk.HORIZONTAL)
+        xScroll.grid(row=1, column = 0, sticky=tk.W+tk.E)
+        yScroll = ttk.Scrollbar(bn_frame, orient=tk.VERTICAL)
+        yScroll.grid(row=0, column = 1, sticky=tk.N+tk.S)
+        self.bn_canvas = tk.Canvas(bn_frame, xscrollcommand=xScroll.set, yscrollcommand=yScroll.set)
+        self.bn_canvas.grid(row = 0, column = 0, sticky=tk.NW+tk.SE)
         xScroll["command"] = self.bn_canvas.xview
         yScroll["command"] = self.bn_canvas.yview
 
@@ -234,7 +232,7 @@ class PruneGUI(Frame):
             return
         fname = asksaveasfilename(title="Save Postscript as...",
                                   defaultextension=".eps", filetypes=[("Encaps. Postscript", "*.eps"), ("all files", "*")])
-        bbox = self.bn_canvas.bbox(ALL)
+        bbox = self.bn_canvas.bbox(tk.ALL)
         print(bbox)
         self.bn_canvas.postscript(file=fname, x = bbox[0], y = bbox[1],
                                   width = bbox[2] - bbox[0], height = bbox[3] - bbox[1])
@@ -252,7 +250,7 @@ class PruneGUI(Frame):
             return
         cid = self.bn_canvas.find_closest(x, y)
         cid = cid[0]
-        if not cid in self.id_to_node:
+        if cid not in self.id_to_node:
             return
         ni = self.id_to_node[cid]
         nname = self.bn[ni].name
@@ -308,7 +306,7 @@ class PruneGUI(Frame):
         layers.append(layer)
 
         # clear canvas
-        self.bn_canvas.delete(ALL)
+        self.bn_canvas.delete(tk.ALL)
         # draw layers
         drawn_nodes = [None] * len(self.bn)
         y = 10
@@ -326,11 +324,11 @@ class PruneGUI(Frame):
                 self.id_to_node[txt] = ni
                 for np in self.bn[ni].parents:
                     px, py = drawn_nodes[np]
-                    self.bn_canvas.create_line(px+15,py+30, x+15,y, arrow=LAST)
+                    self.bn_canvas.create_line(px+15,py+30, x+15,y, arrow=tk.LAST)
                 x += 100
             y += 70
             offset = -offset
-        self.bn_canvas.config(scrollregion=self.bn_canvas.bbox(ALL))
+        self.bn_canvas.config(scrollregion=self.bn_canvas.bbox(tk.ALL))
 
 
     def attr_set_clicked(self, *event):
@@ -356,7 +354,7 @@ class PruneGUI(Frame):
             self.bn_canvas.itemconfig(self.nodenumber_to_id[a], fill="")
 
     def fill_attr_set_list(self, *callparams):
-        if self.bn_interestingness == None:
+        if self.bn_interestingness is None:
             return
 
         mode = ["attrset", "maxcell"]
@@ -382,7 +380,7 @@ class PruneGUI(Frame):
         listindex = 0
         for aset, inter in [(a,i) for a, i in asets_selected]:
             if "attrset" in mode:
-                self.attrset_list.insert(END, "[" + ",".join([self.bn_interestingness.ds.attrset[i].name for i in aset]) + "] " + str(inter))
+                self.attrset_list.insert(tk.END, "[" + ",".join([self.bn_interestingness.ds.attrset[i].name for i in aset]) + "] " + str(inter))
                 #print("[" + ",".join([self.bn_interestingness.ds.attrset[i].name for i in aset]) + "] " + str(inter))
                 self.listindex_to_attrset[listindex] = aset
                 listindex += 1
@@ -395,7 +393,7 @@ class PruneGUI(Frame):
                     if abs(d) >= 0.9 * inter:
                         idomlist = [str(self.bn_interestingness.ds.attrset[a].domain[v]) for a, v in zip(aset, i)]
                         istr = ",".join(idomlist)
-                        self.attrset_list.insert(END, ("    " + istr + " => " + str(d) + "  P^BN=" + str(edistr[i]) +"  P^D=" + str(distr[i])))
+                        self.attrset_list.insert(tk.END, ("    " + istr + " => " + str(d) + "  P^BN=" + str(edistr[i]) +"  P^D=" + str(distr[i])))
                         self.listindex_to_attrset[listindex] = aset
                         listindex += 1
         
@@ -506,7 +504,7 @@ class PruneGUI(Frame):
 
 
 if __name__ == "__main__":
-    pg = PruneGUI(Tk())
+    pg = PruneGUI(tk.Tk())
     pg.mainloop()
     sys.exit(0)
 
