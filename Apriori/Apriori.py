@@ -18,17 +18,25 @@ class Apriori:
     def run(self):
         self.initialize()
         while len(self.cand) > 0 and self.K <= self.maxK:
-            if self.debug > 0: print("K=",self.K)
-            if self.debug > 1: print(self.cand)
-            if self.debug > 0: print("K=",self.K,"counting support")
+            if self.debug > 0:
+                print("K=",self.K)
+            if self.debug > 1:
+                print(self.cand)
+            if self.debug > 0:
+                print("K=",self.K,"counting support")
             N = self.count_support()
-            if self.K == 1: self.add_empty_itemset(N)
-            if self.debug > 1: print(self.cand)
+            if self.K == 1:
+                self.add_empty_itemset(N)
+            if self.debug > 1:
+                print(self.cand)
             self.find_frequent()
-            if self.debug > 1: print(self.cand)
-            if len(self.freq[-1]) == 0: break
+            if self.debug > 1:
+                print(self.cand)
+            if len(self.freq[-1]) == 0:
+                break
             if self.K < self.maxK:
-                if self.debug > 0: print("K=",self.K,"generating candidates")
+                if self.debug > 0:
+                    print("K=",self.K,"generating candidates")
                 self.make_candidates()
                 self.prune_candidates()
             self.K += 1

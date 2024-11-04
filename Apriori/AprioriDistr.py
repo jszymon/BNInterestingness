@@ -2,8 +2,6 @@ from .Apriori import Apriori
 import Utils.SEtree
 import Utils.Counts
 import DataAccess.ArffFileReader
-import numpy
-import itertools
 
 
 class AprioriDistr(Apriori):
@@ -21,13 +19,11 @@ class AprioriDistr(Apriori):
         self.cand = {}
         attrs = self.db.get_attr_set()
         for i in range(len(attrs)):
-            #self.cand[(i,)] = numpy.zeros(as[i].get_n_categories())
             self.cand[(i,)] = {}
     def add_empty_itemset(self, N):
         """Adds an empty attributeset with distribution (N)."""
         self.freq.append({})
         self.freq[-1][()] = {():N}
-        #self.freq[-1][()] = numpy.array(float(N))
     def count_support2(self):
         self.db.rewind()
         N = 0
@@ -86,7 +82,7 @@ class AprioriDistr(Apriori):
         for aset in self.__negativeBorder:
             for i in range(len(aset)):
                 subset = aset[0:i]+aset[i+1:]
-                if not subset in self.positiveBorder:
+                if subset not in self.positiveBorder:
                     self.positiveBorder[subset] = self.freq[len(subset)][subset]
 
 

@@ -32,4 +32,4 @@ if __name__ == "__main__":
     ds = DataAccess.ArffFileReader.create_arff_reader("../data/lenses.arff")
     ris = record_to_itemset_scanner(ds)
     for iset in ris:
-        print iset
+        print(iset)
