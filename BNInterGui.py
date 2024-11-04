@@ -311,10 +311,10 @@ class PruneGUI(ttk.Frame):
         drawn_nodes = [None] * len(self.bn)
         y = 10
         offset = 10
-        maxx = max([len(l) for l in layers])
-        for l in layers:
-            x = (maxx - len(l)) * 100 // 2 + offset
-            for ni in l:
+        maxx = max([len(L) for L in layers])
+        for L in layers:
+            x = (maxx - len(L)) * 100 // 2 + offset
+            for ni in L:
                 drawn_nodes[ni] = (x,y)
                 oval = self.bn_canvas.create_oval(x,y,x+30,y+30)
                 #self.bn_canvas.itemconfig(oval, fill="red")

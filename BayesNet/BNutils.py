@@ -1,6 +1,5 @@
 import numpy
 import itertools
-import operator
 
 #utilities
 def blockiter(seq, n):

@@ -116,7 +116,7 @@ class HuginNode(object):
     def __str__(self):
         ret = ""
         ret += self._class + " " + self.node_type + " " + self.name
-        if self.targets != None:
+        if self.targets is not None:
             ret += "(%s | %s)" % (self.targets, str(self.conditioned_on))
         ret += "\n" + str(self.params)
         return ret
@@ -147,17 +147,18 @@ def parse_net(net, lex):
         net.append(node)
         tok = lex.get_token()    
 
-def parse_distr(potential):
+def parse_distr(potential, shape):
     """Parse potential's distribution."""
     if 'data' in potential.params:
         distr = numpy.array(potential.params['data'])
+        distr.shape = shape
     elif 'model_data' in potential.params:
-        nor = NoisyOR(p.conditioned_on, shape[:-1])
-        for vname, prb in p.params['model_data'][0][1:]:
+        nor = NoisyOR(potential.conditioned_on, shape[:-1])
+        for vname, prb in potential.params['model_data'][0][1:]:
             nor.add_variable(vname, prb)
         distr = nor.get_table()
     else:
-        raise RuntimeError("No distribution for node " + str(ids_2_names[p.targets[0]]))
+        distr = None
     return distr
     
 def read_Hugin_file(file_name):
@@ -204,8 +205,9 @@ def read_Hugin_file(file_name):
             shape = []
             for a in p.conditioned_on + p.targets:
                 shape.append(len(domains[a]))
-            distr = parse_distr(p)
-            distr.shape = shape
+            distr = parse_distr(p, shape)
+            if distr is None:
+                raise RuntimeError("No distribution for node " + str(ids_2_names[p.targets[0]]))
             targets = [ids_2_numbers[c] for c in p.targets]
             conditioned_on = [ids_2_numbers[c] for c in p.conditioned_on]
             if len(targets) == 1:  # ordinary node
