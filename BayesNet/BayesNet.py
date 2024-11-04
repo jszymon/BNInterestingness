@@ -97,7 +97,6 @@ class BayesNet(AttrSet):
     def addEdge(self, src_name, dst_name):
         """Add an edge from attribute src_name to attribute dst_name.""" 
         i = self.names_to_numbers([src_name])[0]
-        j = self.names_to_numbers([dst_name])[0]
         src_node = self[src_name]
         dst_node = self[dst_name]
         if i in dst_node.parents:
@@ -109,8 +108,6 @@ class BayesNet(AttrSet):
     def delEdge(self, src_name, dst_name):
         """Delete the edge from attribute src_name to attribute dst_name.""" 
         i = self.names_to_numbers([src_name])[0]
-        j = self.names_to_numbers([dst_name])[0]
-        src_node = self[src_name]
         dst_node = self[dst_name]
         if i not in dst_node.parents:
             raise RuntimeError("Edge does not exist")
