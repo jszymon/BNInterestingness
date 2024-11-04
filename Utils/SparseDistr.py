@@ -55,6 +55,8 @@ class SparseDistr():
             if len(idx) > 0:
                 p += self.p[idx.item()] * (1-self.prior_factor)
         return p
+    def __getitem__(self, x):
+        return self.P(x)
     def to_array(self):
         prior = np.full(self.shape, 1/self.size)
         if self.X.shape[0] == 0:

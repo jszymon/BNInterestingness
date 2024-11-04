@@ -46,13 +46,16 @@ print(bn.P([0,0,0]))
 print(distr_2_str(bn.jointP()))
 
 print("read/write to file")
-f=NamedTemporaryFile(mode="w+")
+#f=NamedTemporaryFile(mode="w+")
+f=open("/tmp/bn.net", mode="w+")
 write_Hugin_file(bn, f)
-print(f.name)
+print("Temp file", f.name)
 f.seek(0)
 print(f.read())
 
 bn2 = read_Hugin_file(f.name)
 print(bn2)
+print(bn2.P([0,0,0]))
+print(distr_2_str(bn2.jointP()))
 
 f.close()

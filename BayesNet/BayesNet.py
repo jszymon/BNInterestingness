@@ -80,7 +80,7 @@ class JointNode:
     def P(self, x):
         """Get (conditional) probability for given vector x."""
         idx = [x[i] for i in self.nodes]
-        return self.distr.P(tuple(idx))
+        return self.distr[tuple(idx)]
 
     def __str__(self):
         ret = "JointNode: " + str([self.bnet[i].name for i in self.nodes])
@@ -144,6 +144,7 @@ class BayesNet(AttrSet):
             self[i].in_joint = True
         jn = JointNode(self, ni)
         self.joint_distrs.append(jn)
+        return jn
 
     def validate(self, err = 0.00001):
         """Validates the network.

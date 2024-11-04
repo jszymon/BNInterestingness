@@ -147,7 +147,19 @@ def parse_net(net, lex):
         net.append(node)
         tok = lex.get_token()    
 
-
+def parse_distr(potential):
+    """Parse potential's distribution."""
+    if 'data' in potential.params:
+        distr = numpy.array(potential.params['data'])
+    elif 'model_data' in potential.params:
+        nor = NoisyOR(p.conditioned_on, shape[:-1])
+        for vname, prb in p.params['model_data'][0][1:]:
+            nor.add_variable(vname, prb)
+        distr = nor.get_table()
+    else:
+        raise RuntimeError("No distribution for node " + str(ids_2_names[p.targets[0]]))
+    return distr
+    
 def read_Hugin_file(file_name):
     """Return a BayesNet read from a Hugin .net file.
 
@@ -192,15 +204,7 @@ def read_Hugin_file(file_name):
             shape = []
             for a in p.conditioned_on + p.targets:
                 shape.append(len(domains[a]))
-            if 'data' in p.params:
-                distr = numpy.array(p.params['data'])
-            elif 'model_data' in p.params:
-                nor = NoisyOR(p.conditioned_on, shape[:-1])
-                for vname, prb in p.params['model_data'][0][1:]:
-                    nor.add_variable(vname, prb)
-                distr = nor.get_table()
-            else:
-                raise RuntimeError("No distribution for node " + str(ids_2_names[p.targets[0]]))
+            distr = parse_distr(p)
             distr.shape = shape
             targets = [ids_2_numbers[c] for c in p.targets]
             conditioned_on = [ids_2_numbers[c] for c in p.conditioned_on]
@@ -210,8 +214,9 @@ def read_Hugin_file(file_name):
                 # joint node
                 if len(conditioned_on) > 0:
                     raise RuntimeError("Joint nodes cannot have parents.")
-                bn.addJointDistr(targets)
-                print("Warning!!!: joint potential distributions not read yet.")
+                jn = bn.addJointDistr(targets)
+                jn.distr = distr
+                print("Warning!!!: joint potential distributions read as dense.")
     return bn
 
 
