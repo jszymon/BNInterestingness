@@ -59,7 +59,7 @@ class Apriori:
                 self.cand[x]+=1
         return N
     def find_frequent(self):
-        self.freq.append(Utils.SEtree.SEtree())
+        self.freq.append(SEtree())
         for iset, cnt in self.cand.iteritems():
             if cnt >= self.minsup:
                 self.freq[-1][iset] = cnt
