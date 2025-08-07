@@ -158,10 +158,8 @@ class SEtree(object):
         return item
     def keys(self):
         return [k for k in self]
-    #def values(self):
-    #    return [i[1] for i in self.iteritems()]
     def values(self):
-        it = self.iteritems()
+        it = self.items()
         for item in it:
             yield item[1]
     def clear(self):
