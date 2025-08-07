@@ -1,7 +1,7 @@
 import numpy as np
 import random
 
-from DataAccess import RecordReader
+from ..DataAccess import RecordReader
 
 from .BayesNetGraph import topSort
 

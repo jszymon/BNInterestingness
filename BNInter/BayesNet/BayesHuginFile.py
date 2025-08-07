@@ -1,8 +1,8 @@
 import shlex
 import numpy
 
-from DataAccess import Attr
-from BayesNet import BayesNet
+from ..DataAccess import Attr
+from .BayesNet import BayesNet
 from .NoisyOR import NoisyOR
 
 

@@ -1,10 +1,9 @@
 """Mining frequent patterns from a discrete distribution."""
 
-import Apriori.AprioriDistr
-#import DiscreteDistr
+from ..Apriori.AprioriDistr import AprioriDistr
 
 
-class DDApriori(Apriori.AprioriDistr.AprioriDistr):
+class DDApriori(AprioriDistr):
     def __init__(self, discr_distr):
         self.discr_distr = discr_distr
         self.maxK = 10

@@ -1,8 +1,5 @@
 from .Apriori import Apriori
-import Utils.SEtree
-import Utils.Counts
-import DataAccess.ArffFileReader
-
+from ..Utils.Counts import compute_counts_dict_cover
 
 class AprioriDistr(Apriori):
     
@@ -37,7 +34,7 @@ class AprioriDistr(Apriori):
     def count_support(self):
         self.db.rewind()
         domsizes = [len(a.domain) for a in self.db.get_attr_set()]
-        counts, N, missing_counts = Utils.Counts.compute_counts_dict_cover(self.cand.keys(), self.db, len(self.db.get_attr_set()), domsizes)
+        counts, N, missing_counts = compute_counts_dict_cover(self.cand.keys(), self.db, len(self.db.get_attr_set()), domsizes)
         for aset in self.cand:
             self.cand[aset] = counts[aset]
         return N
@@ -89,6 +86,7 @@ class AprioriDistr(Apriori):
 
 
 if __name__ == '__main__':
+    import DataAccess.ArffFileReader
     file = "../../../data/lenses.arff"
     #file = "../../../data/arff/agaricus-lepiota.arff"
     #file = "../ksl_discr_year_2.arff"

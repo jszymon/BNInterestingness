@@ -6,12 +6,12 @@ import sys
 from os.path import basename, dirname
 import time
 
-from DataAccess import Attr, create_arff_reader
-from BayesNet import BayesNet, read_Hugin_file, write_Hugin_file
-import BayesNet.BayesNetLearn
-from BayesNet import topSort
-from BayesPrune.ExactInterestingness import BN_interestingness_exact
-from BayesPrune.SamplingInterestingness import BN_interestingness_sample
+from BNInter.DataAccess import Attr, create_arff_reader
+from BNInter.BayesNet import BayesNet, read_Hugin_file, write_Hugin_file
+import BNInter.BayesNet.BayesNetLearn
+from BNInter.BayesNet import topSort
+from BNInter.BayesPrune.ExactInterestingness import BN_interestingness_exact
+from BNInter.BayesPrune.SamplingInterestingness import BN_interestingness_sample
 
 #from tkinter import *
 from tkinter.messagebox import askokcancel, showerror
@@ -199,7 +199,7 @@ class PruneGUI(ttk.Frame):
             return
         if not askokcancel(message = "Are you sure you want to delete all edges?"):
             return
-        BayesNet.BayesNetLearn.makeIndependentStructure(self.bn)
+        BNInter.BayesNet.BayesNetLearn.makeIndependentStructure(self.bn)
         self.draw_network()
         self.bn_status_bar.config(text="Edges deleted")
 
@@ -427,7 +427,7 @@ class PruneGUI(ttk.Frame):
         self.master.update()
 
         self.ds.rewind()
-        BayesNet.BayesNetLearn.learnProbabilitiesFromData(self.bn, self.ds, priorN = 0)
+        BNInter.BayesNet.BayesNetLearn.learnProbabilitiesFromData(self.bn, self.ds, priorN = 0)
         self.ds.rewind()
         debug = 1
         t1 = time.time()
@@ -475,10 +475,10 @@ class PruneGUI(ttk.Frame):
         self.data_file_name.set(fname)
         self.bnet_file_name.set("")
         print("assuming independent structure")
-        self.bn = BayesNet.BayesNet(basename(self.ds.filename), [Attr(a.name, "CATEG", a.domain) for a in self.ds.attrset])
-        BayesNet.BayesNetLearn.makeIndependentStructure(self.bn)
+        self.bn = BayesNet(basename(self.ds.filename), [Attr(a.name, "CATEG", a.domain) for a in self.ds.attrset])
+        BNInter.BayesNet.BayesNetLearn.makeIndependentStructure(self.bn)
         self.ds.rewind()
-        BayesNet.BayesNetLearn.learnProbabilitiesFromData(self.bn, self.ds, priorN = 0)
+        BNInter.BayesNet.BayesNetLearn.learnProbabilitiesFromData(self.bn, self.ds, priorN = 0)
         print(self.bn)
         self.draw_network()
 

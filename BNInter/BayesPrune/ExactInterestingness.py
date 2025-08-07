@@ -1,18 +1,17 @@
 import itertools
 import numpy
 
-import sop.sop
-import sop.cached_sop
+from ..sop.cached_sop import cached_array_sop
 from .DiscreteDistr import DiscreteDistrSOP
 
-import Apriori
+from ..Apriori.AprioriDistr import AprioriDistr
 from .DDApriori import DDApriori
 
 
 def create_sop(bn):
     """create sum of products for Bayesian network BN."""
     #asop = sop.sop.array_sop(bn.n)
-    asop = sop.cached_sop.cached_array_sop(len(bn))
+    asop = cached_array_sop(len(bn))
     for i, node in enumerate(bn):
         asop.add_factor(node.parents + [i], node.distr)
     return asop
@@ -52,7 +51,7 @@ class BN_interestingness_exact(object):
 
     def compute_frequent_attr_sets_in_data(self, minsup, maxK, apriori_debug):
         self.ds.rewind()
-        self.apriori = Apriori.AprioriDistr.AprioriDistr(self.ds)
+        self.apriori = AprioriDistr(self.ds)
         self.apriori.minsup = minsup
         self.apriori.maxK = maxK
         self.apriori.debug = apriori_debug

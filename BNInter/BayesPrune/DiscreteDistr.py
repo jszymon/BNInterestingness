@@ -1,9 +1,11 @@
 """Classes for handling multivariate discrete distributions."""
 
-import numpy as np
-import Utils.SEtree
-import Utils.Counts
 import random
+
+import numpy as np
+
+from ..Utils.SEtree import SEtree
+from ..Utils.Counts import marginalize_numpy
 
 class DiscreteDistrSOP:
     """A multivariate discrete distribution represented as a sum of
@@ -121,7 +123,7 @@ class DiscreteDistrSOP:
         
         ntogo = len(border)
         ntotal = ntogo
-        setree = Utils.SEtree.SEtree()
+        setree = SEtree()
         for vars in border:
             setree[vars] = None
             
@@ -137,7 +139,7 @@ class DiscreteDistrSOP:
             vars_to_remove = []
             for vars in setree.iter_included(bestsuperset):
                 if bestbenefit > -1000:
-                    distr = Utils.Counts.marginalize_numpy(superdistr, bestsuperset, vars)
+                    distr = marginalize_numpy(superdistr, bestsuperset, vars)
                     self.cache[vars] = distr
                 vars_to_remove.append(vars)
             for vars in vars_to_remove:

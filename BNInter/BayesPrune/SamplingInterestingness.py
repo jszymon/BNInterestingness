@@ -4,12 +4,12 @@ import tempfile
 import os
 
 import numpy as np
-import Utils.gaussinv
-import Utils.Counts
-import Utils.AttrSetCover
-from DataAccess import ProjectionReader
-from DataAccess import SelectionReader
-from BayesNet import BayesSampler
+
+from ..Utils.gaussinv import cdf_ugaussian_Pinv
+from ..Utils.Counts import compute_counts_array_cover
+from ..DataAccess import ProjectionReader
+from ..DataAccess import SelectionReader
+from ..BayesNet import BayesSampler
 
 
 
@@ -127,7 +127,7 @@ class attr_set(object):
     def compute_interestingness(self, delta):
         self.inter = (np.abs(self.counts_model/self.N_model - self.counts_data/self.N_data)).max()
         if self.sample_from_data:
-            z = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
+            z = cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
             pM = self.counts_model / self.N_model
             stddevM = pM * (1.0 - pM) / self.N_model
             pD = self.counts_data / self.N_data
@@ -138,7 +138,7 @@ class attr_set(object):
             #self.inter_ci = E_Chernoff(N_model, delta/self.domsize)
             #self.inter_ci = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize) * 1.0 / (2*math.sqrt(N_model))
             # normal approx using different variances
-            z = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
+            z = cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
             p = self.counts_model / self.N_model
             stddev = p * (1.0 - p)
             self.inter_ci = z * math.sqrt(stddev.max() / self.N_model)
@@ -147,7 +147,7 @@ class attr_set(object):
         self.supp = max(float(self.counts_data.max()) / self.N_data,
                         float(self.counts_model.max()) / self.N_model)
         if self.sample_from_data:
-            z = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.25*delta/self.domsize)
+            z = cdf_ugaussian_Pinv(1.0 - 0.25*delta/self.domsize)
             pM = self.counts_model / self.N_model
             stddevM = pM * (1.0 - pM) / self.N_model
             pD = self.counts_data / self.N_data
@@ -158,7 +158,7 @@ class attr_set(object):
             #self.supp_ci = E_Chernoff(self.N_model, delta/self.domsize)
             #self.supp_ci = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize) * 1.0 / (2*math.sqrt(self.N_model))
             # normal approx using different variances
-            z = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
+            z = cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
             p = self.counts_model / self.N_model
             stddev = p * (1.0 - p)
             self.supp_ci = z * math.sqrt(stddev.max() / self.N_model)
@@ -168,7 +168,7 @@ class attr_set(object):
         interval for interestingness within E."""
         if self.sample_from_data:
             # normal approx using different variances
-            cdf_inv = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
+            cdf_inv = cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
             pM = self.counts_model / self.N_model
             stddevM = pM * (1.0 - pM)
             pD = self.counts_data / self.N_data
@@ -176,10 +176,10 @@ class attr_set(object):
             N = cdf_inv * cdf_inv * (stddevM + stddevD).max() / (E * E)
         else:
             N = N_Chernoff(E, delta/self.domsize)
-            cdf_inv = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
+            cdf_inv = cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
             N = 0.25 * cdf_inv * cdf_inv / (E * E)
             # normal approx using different variances
-            cdf_inv = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
+            cdf_inv = cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
             pM = self.counts_model / self.N_model
             stddev = pM * (1.0 - pM)
             N = cdf_inv * cdf_inv * stddev.max() / (E * E)
@@ -189,7 +189,7 @@ class attr_set(object):
         interval for support within E."""
         if self.sample_from_data:
             # normal approx using different variances
-            cdf_inv = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.25*delta/self.domsize)
+            cdf_inv = cdf_ugaussian_Pinv(1.0 - 0.25*delta/self.domsize)
             pM = self.counts_model / self.N_model
             stddevM = pM * (1.0 - pM)
             pD = self.counts_data / self.N_data
@@ -197,10 +197,10 @@ class attr_set(object):
             N = cdf_inv * cdf_inv * (stddevM.max(), stddevD.max()) / (E * E)
         else:
             N = N_Chernoff(E, delta/self.domsize)
-            cdf_inv = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
+            cdf_inv = cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
             N = 0.25 * cdf_inv * cdf_inv / (E * E)
             # normal approx using different variances
-            cdf_inv = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
+            cdf_inv = cdf_ugaussian_Pinv(1.0 - 0.5*delta/self.domsize)
             pM = self.counts_model / self.N_model
             stddev = pM * (1.0 - pM)
             N = cdf_inv * cdf_inv * stddev.max() / (E * E)
@@ -529,7 +529,7 @@ class BN_interestingness_sample(object):
         if self.sample_from_data:
             print("sampling from data")
             #counts, N, missing_counts = Utils.Counts.compute_counts_array_cover(asets, self.ds, self.nattrs, domsizes, maxN = self.batch_size)
-            counts, N, missing_counts = Utils.Counts.compute_counts_array_cover(asets, sample_data, self.nattrs, domsizes, maxN = self.batch_size)
+            counts, N, missing_counts = compute_counts_array_cover(asets, sample_data, self.nattrs, domsizes, maxN = self.batch_size)
             for h in hyp:
                 h.update_data_counts(counts[h.key], N - missing_counts[h.key])
             #self.minN_data += N
@@ -538,14 +538,14 @@ class BN_interestingness_sample(object):
             if self.candidates_generated:
                 self.ds.rewind()
                 sample_data = list(self.ds)
-                counts_data, N_data, missing_counts = Utils.Counts.compute_counts_array_cover(asets, sample_data, self.nattrs, domsizes, maxN = -1)
+                counts_data, N_data, missing_counts = compute_counts_array_cover(asets, sample_data, self.nattrs, domsizes, maxN = -1)
                 for h in hyp:
                     h.N_data = N_data - missing_counts[h.key]
                     h.counts_data = counts_data[h.key]
 
         ### count from BN
         #counts, N = Utils.Counts.compute_counts_array_cover(asets, self.sampler, self.nattrs, domsizes, maxN = self.batch_size)
-        counts, N, missing_counts = Utils.Counts.compute_counts_array_cover(asets, sample_bn, self.nattrs, domsizes, maxN = self.batch_size)
+        counts, N, missing_counts = compute_counts_array_cover(asets, sample_bn, self.nattrs, domsizes, maxN = self.batch_size)
         for h in hyp:
             h.update_model_counts(counts[h.key], N - missing_counts[h.key])
         #self.minN_bn += N
@@ -701,10 +701,10 @@ class BN_interestingness_sample(object):
             totsize += self.__domsize(h.key)
         #ci = E_Chernoff(N, delta/totsize)
         if self.sample_from_data:
-            ci = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/totsize) \
+            ci = cdf_ugaussian_Pinv(1.0 - 0.5*delta/totsize) \
                  * 0.5 * math.sqrt(1.0 / Nbn + 1.0 / Ndata * (self.ND - Ndata) / (self.ND - 1))
         else:
-            ci = Utils.gaussinv.cdf_ugaussian_Pinv(1.0 - 0.5*delta/totsize) * 1.0 / (2*math.sqrt(Nbn))
+            ci = cdf_ugaussian_Pinv(1.0 - 0.5*delta/totsize) * 1.0 / (2*math.sqrt(Nbn))
         return ci
 
 

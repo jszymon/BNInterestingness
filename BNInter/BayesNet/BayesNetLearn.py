@@ -6,10 +6,10 @@ from math import exp
 from math import lgamma
 from functools import reduce
 
-from Utils import compute_counts_array
+from ..Utils import compute_counts_array
 
-from DataAccess import Attr
-from BayesNet import BayesNet
+from ..DataAccess import Attr
+from .BayesNet import BayesNet
 from .BNutils import blockiter, distr_2_str
 
 

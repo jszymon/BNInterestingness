@@ -2,9 +2,9 @@
 
 import numpy as np
 
-from DataAccess import Attr, AttrSet
+from ..DataAccess import Attr, AttrSet
 from .BNutils import blockiter, distr_2_str
-from Utils import SparseDistr
+from ..Utils import SparseDistr
     
 
 

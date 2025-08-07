@@ -1,8 +1,8 @@
 """Graph Theory related aspects of Bayesian networks, like topological
 sorting, cyclicity checks."""
 
-from DataAccess import Attr
-from BayesNet import BayesNet
+from ..DataAccess import Attr
+from .BayesNet import BayesNet
 
 
 def ancestors(bn, nodes):

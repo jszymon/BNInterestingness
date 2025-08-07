@@ -1,4 +1,4 @@
-import Utils.SEtree
+from ..Utils.SEtree import SEtree
 
 
 class Apriori:
@@ -42,12 +42,12 @@ class Apriori:
             self.K += 1
         self.N = N
     def init_cand(self):
-        self.cand = Utils.SEtree.SEtree()
+        self.cand = SEtree()
         for i in range(self.ir.n_items):
             self.cand[[i]] = 0
     def add_empty_itemset(self, N):
         """Adds an empty itemset with support N."""
-        self.freq.append(Utils.SEtree.SEtree())
+        self.freq.append(SEtree())
         self.freq[-1][[]] = N
     def count_support(self):
         self.ir.rewind()
