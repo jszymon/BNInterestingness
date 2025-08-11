@@ -1,6 +1,6 @@
 import numpy
 
-import sop
+from BNInter import sop
 
 # P(x0x1)
 dist1 = ([0,1], numpy.array([[1.0/9,2.0/9,0.0/9],
