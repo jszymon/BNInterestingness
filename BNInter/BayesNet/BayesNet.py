@@ -153,7 +153,9 @@ class BayesNet(AttrSet):
             ri = len(n.domain)
             for subdistr in blockiter(np.ravel(n.distr), ri):
                 if abs(sum(subdistr) - 1.0) > err:
-                    print("error in node", n.name, "prob sum=", sum(subdistr))
+                    msg=f"Conditional distribution for {n.name} does not sum to 1.0 for all parent combinations"
+                    raise ValueError(msg)
+                    #print("error in node", n.name, "prob sum=", sum(subdistr))
 
 
     def normalizeProbabilities(self):

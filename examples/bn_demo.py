@@ -1,9 +1,9 @@
 import numpy as np
 
-from BayesNet import BayesNet
-from BayesNet import distr_2_str
+from BNInter.BayesNet import BayesNet
+from BNInter.BayesNet import distr_2_str
 
-from DataAccess import Attr
+from BNInter.DataAccess import Attr
 
 
 
