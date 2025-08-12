@@ -2,13 +2,13 @@ from tempfile import NamedTemporaryFile
 
 import numpy as np
 
-from BayesNet import BayesNet
-from BayesNet import BayesSampler
-from BayesNet import distr_2_str
+from BNInter.BayesNet import BayesNet
+from BNInter.BayesNet import BayesSampler
+from BNInter.BayesNet import distr_2_str
 
-from BayesNet import read_Hugin_file, write_Hugin_file
+from BNInter.BayesNet import read_Hugin_file, write_Hugin_file
 
-from DataAccess import Attr
+from BNInter.DataAccess import Attr
 
 
 

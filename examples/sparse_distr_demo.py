@@ -1,4 +1,4 @@
-from Utils import SparseDistr
+from BNInter.Utils import SparseDistr
 
 s = SparseDistr((5,5))
 print(s)
