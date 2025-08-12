@@ -63,7 +63,7 @@ class BayesNode(Attr):
 
 
 class JointNode:
-    def __init__(self, bnet, nodes):
+    def __init__(self, bnet, nodes, distr=None):
         """Create a node representing a joint distribution of several variables.
 
         The variables are also present as ordinary nodes.  Nodes
@@ -76,7 +76,9 @@ class JointNode:
                 raise RuntimeError(f"Nodes in a joint must be given as ints.  Got {i}")
         self.nodes = nodes
         self.shape = tuple(self.bnet[i].nd for i in self.nodes)
-        self.distr = SparseDistr(self.shape)
+        if distr is None:
+            distr = SparseDistr(self.shape)
+        self.distr = distr
     def P(self, x):
         """Get (conditional) probability for given vector x."""
         idx = [x[i] for i in self.nodes]
@@ -114,7 +116,7 @@ class BayesNet(AttrSet):
         dst_node.distr = np.sum(dst_node.distr, dst_node.parents.index(i)) / 2
         del dst_node.parents[dst_node.parents.index(i)]
 
-    def addJointDistr(self, nodes):
+    def addJointDistr(self, nodes, distr=None):
         """Declares that given nodes will be modeled using their joint
         distribution.
 
@@ -139,7 +141,7 @@ class BayesNet(AttrSet):
                 raise RuntimeError(f"Nodes in a joint distribution cannot have parents (node {name}).")
         for i in ni:
             self[i].in_joint = True
-        jn = JointNode(self, ni)
+        jn = JointNode(self, ni, distr)
         self.joint_distrs.append(jn)
         return jn
 

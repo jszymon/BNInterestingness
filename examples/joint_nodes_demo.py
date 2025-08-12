@@ -2,6 +2,7 @@ from tempfile import NamedTemporaryFile
 
 import numpy as np
 
+from BNInter.Utils import SparseDistr
 from BNInter.BayesNet import BayesNet
 from BNInter.BayesNet import BayesSampler
 from BNInter.BayesNet import distr_2_str
@@ -11,20 +12,23 @@ from BNInter.BayesNet import read_Hugin_file, write_Hugin_file
 from BNInter.DataAccess import Attr
 
 
+def make_basic_bn():
+    bn = BayesNet("testNet", [Attr('A', "CATEG", [0,1,2]),
+                              Attr('B', "CATEG", [0,1]),
+                              Attr('Y', "CATEG", [0,1])])
+    print(bn['A'])
+    bn.addEdge('B', 'Y')
+    bn.addEdge('A', 'Y')
+    bn["Y"].distr = np.array([
+        [[0.1, 0.9], [0.2, 0.8]], #A=0
+        [[0.75, 0.25], [0.5, 0.5]], #A=1
+        [[0.55, 0.45], [0.6, 0.4]], #A=2
+    ])
+    bn.validate()
+    return bn
 
-bn = BayesNet("testNet", [Attr('A', "CATEG", [0,1,2]),
-                          Attr('B', "CATEG", [0,1]),
-                          Attr('Y', "CATEG", [0,1])])
-print(bn['A'])
-bn.addEdge('B', 'Y')
-bn.addEdge('A', 'Y')
-bn["Y"].distr = np.array([
-    [[0.1, 0.9], [0.2, 0.8]], #A=0
-    [[0.75, 0.25], [0.5, 0.5]], #A=1
-    [[0.55, 0.45], [0.6, 0.4]], #A=2
-])
+bn = make_basic_bn()
 print(bn)
-bn.validate()
 print(bn.P([0,0,0]))
 print(distr_2_str(bn.jointP()))
 
@@ -35,10 +39,9 @@ print(bn.P([0,0,0]))
 print(distr_2_str(bn.jointP()))
 
 print("---------------------------------")
-# warning: breaks encapsulation
-d = bn.joint_distrs[0].distr
-d.prior_factor = 0.1
-d.update_distr({(2,0):0.4, (1,1):0.6})
+bn = make_basic_bn()
+d = SparseDistr((3,2), {(2,0):0.4, (1,1):0.6}, prior_factor=0.1)
+bn.addJointDistr(["A", "B"], d)
 print(bn)
 print(bn.P([0,0,0]))
 print(distr_2_str(bn.jointP()))
