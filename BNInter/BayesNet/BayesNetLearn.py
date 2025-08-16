@@ -7,6 +7,7 @@ from math import lgamma
 from functools import reduce
 
 from ..Utils import compute_counts_array
+from ..Utils import compute_counts_dict
 
 from ..DataAccess import Attr
 from .BayesNet import BayesNet
@@ -14,9 +15,12 @@ from .BNutils import blockiter, distr_2_str
 
 
 def learnProbabilitiesFromData(bn, dataset, priorN = 1):
-    asets = [n.parents + [i] for (i,n) in enumerate(bn)]
+    asets = [n.parents + [i] for (i,n) in enumerate(bn) if not n.in_joint]
     counts, N, missing_counts = compute_counts_array(asets, bn.get_shape(), dataset)
+    # single nodes
     for j, n in enumerate(bn):
+        if n.in_joint:
+            continue
         c = counts[tuple(n.parents + [j])]
         ri = len(n.domain)
         rdistr = np.ravel(n.distr)
@@ -36,6 +40,12 @@ def learnProbabilitiesFromData(bn, dataset, priorN = 1):
             i += ri
         rdistr.shape = n.distr.shape
         n.distr = rdistr
+    # joint distribution nodes
+    asets = [jn.nodes for jn in bn.joint_distrs]
+    counts, N, missing_counts = compute_counts_dict(asets, dataset)
+    for jn in bn.joint_distrs:
+        c = counts[tuple(jn)]
+        r = reduce(operator.mul, jn.shape, 1)
 
 def lnP_dataset_cond_network_structure(bn, dataset, priorN = None):
     """Compute the natural logarithm of probability that the

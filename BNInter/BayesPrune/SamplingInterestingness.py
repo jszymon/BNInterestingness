@@ -112,7 +112,7 @@ class attr_set(object):
         #self.N_data = int(f.readline())
         self.N_model = int(f.read(12))
         self.N_data = int(f.read(12))
-        cnt = np.prod(self.shape)
+        cnt = math.prod(self.shape)
         self.counts_model = np.reshape(np.fromfile(f, float, cnt), self.shape)
         self.counts_data  = np.reshape(np.fromfile(f, float, cnt), self.shape)
     def clear_data(self):
