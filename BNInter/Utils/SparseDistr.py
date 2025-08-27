@@ -21,8 +21,7 @@ class SparseDistr():
         self.shape = shape
         self.nd = len(self.shape)
         self.size = math.prod(shape)
-        self.prior_factor = prior_factor
-        self.set_distr(distr)
+        self.set_distr(distr, prior_factor)
     def update_distr(self, distr):
         if isinstance(distr, dict):
             distr = list(distr.items())
@@ -33,7 +32,8 @@ class SparseDistr():
         self.X = np.array(list(x[0] for x in new_distr), dtype=int)
         self.p = np.array(list(x[1] for x in new_distr), dtype=float)
         self.normalize()
-    def set_distr(self, distr):
+    def set_distr(self, distr, prior_factor=0):
+        self.prior_factor = prior_factor
         self.X = np.empty((0, self.nd), dtype=int)
         self.p = np.empty((0,), dtype=float)
         self.update_distr(distr)

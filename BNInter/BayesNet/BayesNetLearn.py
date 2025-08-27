@@ -32,7 +32,7 @@ def learnProbabilitiesFromData(bn, dataset, priorN = 1):
                 sum += rcount[i + j]
             if sum > 0 or priorN > 0:
                 for j in range(ri):
-                    rdistr[i + j] = (float(priorN) / ri + float(rcount[i + j])) / (priorN + sum)
+                    rdistr[i + j] = (priorN / ri + rcount[i + j]) / (priorN + sum)
             else:
                 #print "Warning: no data about distribution, node ", n.attrname
                 for j in range(ri):
@@ -44,8 +44,10 @@ def learnProbabilitiesFromData(bn, dataset, priorN = 1):
     asets = [jn.nodes for jn in bn.joint_distrs]
     counts, N, missing_counts = compute_counts_dict(asets, dataset)
     for jn in bn.joint_distrs:
-        c = counts[tuple(jn)]
-        r = reduce(operator.mul, jn.shape, 1)
+        c = counts[tuple(jn.nodes)]
+        n = N - missing_counts[tuple(jn.nodes)]
+        new_p = {x: (c + priorN) / (n + jn.distr.size * priorN) for x, c in c.items()}
+        jn.distr.set_distr(new_p, prior_factor = priorN/n)
 
 def lnP_dataset_cond_network_structure(bn, dataset, priorN = None):
     """Compute the natural logarithm of probability that the
