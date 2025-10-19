@@ -46,8 +46,9 @@ def learnProbabilitiesFromData(bn, dataset, priorN = 1):
     for jn in bn.joint_distrs:
         c = counts[tuple(jn.nodes)]
         n = N - missing_counts[tuple(jn.nodes)]
-        new_p = {x: (c + priorN) / (n + jn.distr.size * priorN) for x, c in c.items()}
-        jn.distr.set_distr(new_p, prior_factor = priorN/n)
+        alpha = jn.distr.size * priorN / (n + jn.distr.size * priorN)
+        new_p = {x: c / n for x, c in c.items()}
+        jn.distr.set_distr(new_p, prior_factor = alpha)
 
 def lnP_dataset_cond_network_structure(bn, dataset, priorN = None):
     """Compute the natural logarithm of probability that the

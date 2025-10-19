@@ -50,18 +50,21 @@ def test_bn_w_joint_learn(basic_bayes_net):
     py = joint_p_array.sum(axis=(0,1))
     assert np.allclose(py, [1/3, 1/3, 1/3])
 
-    learnProbabilitiesFromData(bn, [[0,0,1],[0,1,0],[1,1,2]], priorN = 1)
+    X = [(0,0,1),(0,1,0),(1,1,2)]
+    correct_p = np.ones((2,2))
+    for x in X:
+        correct_p[x[:2]] += 1
+    correct_p /= (len(X) + 4)
+    learnProbabilitiesFromData(bn, X, priorN = 1)
     joint_p_array = bn.jointP()
     pa = joint_p_array.sum(axis=(1,2))
-    assert np.allclose(pa, [(1+1+1+1)/(3+4), (1+1)/(3+4)])
+    assert np.allclose(pa, correct_p.sum(axis=1))
     pb = joint_p_array.sum(axis=(0,2))
-    #assert np.allclose(pb, [1/3, 2/3])
-    py = joint_p_array.sum(axis=(0,1))
-    #assert np.allclose(py, [1/3, 1/3, 1/3])
+    assert np.allclose(pb, correct_p.sum(axis=0))
 
-    #lnP = lnP_dataset_cond_network_structure(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
-    #assert lnP <= 0
-    #makeIndependentStructure(bn)
-    #learnProbabilitiesFromData(bn, [[0,0,1],[0,1,0],[1,1,2]])
-    #lnP2 = lnP_dataset_cond_network_structure(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
-    #assert lnP2 <= 0
+    lnP = lnP_dataset_cond_network_structure(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
+    assert lnP <= 0
+    makeIndependentStructure(bn)
+    learnProbabilitiesFromData(bn, [[0,0,1],[0,1,0],[1,1,2]], priorN=1)
+    lnP2 = lnP_dataset_cond_network_structure(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
+    assert lnP2 <= 0
