@@ -11,7 +11,6 @@ def blockiter(seq, n):
         yield ret
 
 def distr_2_str(distr, cond = False):
-    # numarray.__str__ seems slow and doesn't work with psyco
     ret = ""
     if not cond:
         ind = numpy.ndindex(distr.shape)

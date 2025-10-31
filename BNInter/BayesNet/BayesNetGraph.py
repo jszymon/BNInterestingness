@@ -52,22 +52,3 @@ def topSort(bn):
         raise RuntimeError("Cycle in Bayesian network")
     return sorted
 
-if __name__ == "__main__":
-    bn = BayesNet("testGraph",
-                  [Attr('a', "CATEG", [0,1]),
-                   Attr('b', "CATEG", [0,1]),
-                   Attr('c', "CATEG", [0,1]),
-                   Attr('d', "CATEG", [0,1])])
-    
-    bn.addEdge('a', 'c')
-    bn.addEdge('a', 'b')
-    bn.addEdge('b', 'c')
-    bn.addEdge('d', 'c')
-
-    print(ancestors(bn, ['d']))
-    print(ancestors(bn, ['c']))
-    print(ancestors(bn, ['b']))
-    print(ancestors(bn, ['a']))
-
-    #bn.addEdge('d', 'c')  # add a cycle
-    print(topSort(bn))
