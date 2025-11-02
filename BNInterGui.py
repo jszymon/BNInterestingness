@@ -19,6 +19,8 @@ from tkinter.filedialog import asksaveasfilename, askopenfilename
 from tkinter import ttk
 import tkinter as tk
 
+from BNInter.Utils.tk_utils import tk_rounded_rect
+
 global debug
 debug = 0
 
@@ -154,6 +156,8 @@ class PruneGUI(ttk.Frame):
         addb.pack(side=tk.LEFT)
         delb =ttk.Button(control_frame, text = "Del edge", command = self.del_edge)
         delb.pack(side=tk.LEFT)
+        addj =ttk.Button(control_frame, text = "Add joint", command = self.add_joint)
+        addj.pack(side=tk.LEFT)
         delallb =ttk.Button(control_frame, text = "Del all edges", command = self.del_edges)
         delallb.pack(side=tk.LEFT)
         saveasb =ttk.Button(control_frame, text = "Save as", command = self.save_net)
@@ -184,6 +188,7 @@ class PruneGUI(ttk.Frame):
         self.click_submode = "NONE"
         self.click_state = 0
         self.bn_canvas.bind("<Button-1>", self.bn_canvas_clicked)
+        self.bn_canvas.bind("<Button-3>", self.bn_canvas_right_clicked)
 
 
     def must_have_attr_changed(self, *event):
@@ -217,6 +222,14 @@ class PruneGUI(ttk.Frame):
         self.bn_status_bar.config(text="Select 'from' node")
         self.click_mode = "EDGE_OP"
         self.click_submode = "DEL"
+        self.click_state = 0
+
+    def add_joint(self, *event):
+        if self.bn is None:
+            return
+        self.bn_status_bar.config(text="Select nodes.  Rightclick to finish")
+        self.click_mode = "JOINT_OP"
+        self.click_submode = "ADD"
         self.click_state = 0
 
     def save_net(self, *event):
@@ -279,21 +292,50 @@ class PruneGUI(ttk.Frame):
                     print("Wrong sub mode!")
                 self.draw_network()
                 return
+        elif self.click_mode == "JOINT_OP":
+            if ni not in self.selected_attrs:
+                self.selected_attrs.append(ni)
+                self.bn_canvas.itemconfig(self.nodenumber_to_id[ni], fill="red")
             else:
-                print("Wrong mode!")
-                return
+                self.selected_attrs.remove(ni)
+                self.bn_canvas.itemconfig(self.nodenumber_to_id[ni], fill="")
+        else:
+            print("Wrong mode!")
+            return
 
-            
+    def bn_canvas_right_clicked(self, event):
+        #print("clicked at", event.x, event.y)
+        x = self.bn_canvas.canvasx(event.x)
+        y = self.bn_canvas.canvasy(event.y)
+        if self.bn is None:
+            return
+        if self.click_mode == "JOINT_OP":
+            if len(self.selected_attrs) > 1:
+                # add new joint distr
+                self.bn.addJointDistr(self.selected_attrs)
+                self.draw_network()
+            # cleanup
+            self.click_mode == "NONE"
+            self.clear_selected_attrs()
+            self.bn_status_bar.config(text="")
+            return
 
     def draw_network(self):
         if self.bn is None:
             return
+        print(self.bn)
 
         self.id_to_node = {} # map canvas IDs to node numbers
         self.nodenumber_to_id = {} # map canvas IDs to node numbers
 
         # group nodes into layers
         ts = topSort(self.bn)
+        # move nodes in joint distributions first
+        # this is possible since they don't have parents
+        attrs_in_joint_distrs = []
+        for jn in self.bn.joint_distrs:
+            attrs_in_joint_distrs.extend(jn.nodes)
+        ts = attrs_in_joint_distrs + [i for i in ts if not self.bn[i].in_joint]
         layers = []
         layer = []
         for ni in ts:
@@ -312,7 +354,7 @@ class PruneGUI(ttk.Frame):
         y = 10
         offset = 10
         maxx = max([len(L) for L in layers])
-        for L in layers:
+        for li, L in enumerate(layers):
             x = (maxx - len(L)) * 100 // 2 + offset
             for ni in L:
                 drawn_nodes[ni] = (x,y)
@@ -328,6 +370,15 @@ class PruneGUI(ttk.Frame):
                 x += 100
             y += 70
             offset = -offset
+        # draw frames around joint nodes
+        for jn in self.bn.joint_distrs:
+            x1, y1 = drawn_nodes[jn.nodes[0]]
+            x1 -= 8
+            y1 -= 8
+            x2, y2 = drawn_nodes[jn.nodes[-1]]
+            x2 += 30+8
+            y2 += 30+8
+            tk_rounded_rect(self.bn_canvas, x1, y1, x2, y2, fill="", outline="red")
         self.bn_canvas.config(scrollregion=self.bn_canvas.bbox(tk.ALL))
 
 
@@ -352,6 +403,7 @@ class PruneGUI(ttk.Frame):
             return
         for a in self.selected_attrs:
             self.bn_canvas.itemconfig(self.nodenumber_to_id[a], fill="")
+        self.selected_attrs = []
 
     def fill_attr_set_list(self, *callparams):
         if self.bn_interestingness is None:

@@ -42,12 +42,15 @@ def learnProbabilitiesFromData(bn, dataset, priorN = 1):
         n.distr = rdistr
     # joint distribution nodes
     asets = [jn.nodes for jn in bn.joint_distrs]
+    if hasattr(dataset, "rewind"): # allow lists as datasets
+        dataset.rewind()
     counts, N, missing_counts = compute_counts_dict(asets, dataset)
+    import ipdb;ipdb.set_trace()
     for jn in bn.joint_distrs:
         c = counts[tuple(jn.nodes)]
         n = N - missing_counts[tuple(jn.nodes)]
         alpha = jn.distr.size * priorN / (n + jn.distr.size * priorN)
-        new_p = {x: c / n for x, c in c.items()}
+        new_p = {x: v / n for x, v in c.items()}
         jn.distr.set_distr(new_p, prior_factor = alpha)
 
 def lnP_dataset_cond_network_structure(bn, dataset, priorN = None):
