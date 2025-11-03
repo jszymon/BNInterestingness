@@ -27,7 +27,11 @@ def ancestors(bn, nodes):
 def topSort(bn):
     """Returns names of nodes of bn in topological sort order.
 
-    Throws an exception if the network is cyclic."""
+    Throws an exception if the network is cyclic.  Ensures nodes in
+    joint distributions come first in the topological order. This is
+    possible since they don't have parents.
+
+    """
     sorted = []
     indegrees = {}
     S = []  # list of nodes with in-degrees ==0
@@ -50,5 +54,9 @@ def topSort(bn):
                     indegrees[i2] = indg
     if len(indegrees) > 0:
         raise RuntimeError("Cycle in Bayesian network")
+    attrs_in_joint_distrs = []
+    for jn in bn.joint_distrs:
+        attrs_in_joint_distrs.extend(jn.nodes)
+    sorted = attrs_in_joint_distrs + [i for i in sorted if not bn[i].in_joint]
     return sorted
 

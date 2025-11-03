@@ -329,13 +329,8 @@ class PruneGUI(ttk.Frame):
         self.nodenumber_to_id = {} # map canvas IDs to node numbers
 
         # group nodes into layers
+        # nodes in joint distributions come first
         ts = topSort(self.bn)
-        # move nodes in joint distributions first
-        # this is possible since they don't have parents
-        attrs_in_joint_distrs = []
-        for jn in self.bn.joint_distrs:
-            attrs_in_joint_distrs.extend(jn.nodes)
-        ts = attrs_in_joint_distrs + [i for i in ts if not self.bn[i].in_joint]
         layers = []
         layer = []
         for ni in ts:
