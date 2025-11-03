@@ -180,6 +180,8 @@ class PruneGUI(ttk.Frame):
         yScroll = ttk.Scrollbar(bn_frame, orient=tk.VERTICAL)
         yScroll.grid(row=0, column = 1, sticky=tk.N+tk.S)
         self.bn_canvas = tk.Canvas(bn_frame, xscrollcommand=xScroll.set, yscrollcommand=yScroll.set)
+        # items fill with canvas color react to clicks inside them
+        self.canvas_color = self.bn_canvas["background"]
         self.bn_canvas.grid(row = 0, column = 0, sticky=tk.NW+tk.SE)
         xScroll["command"] = self.bn_canvas.xview
         yScroll["command"] = self.bn_canvas.yview
@@ -261,7 +263,10 @@ class PruneGUI(ttk.Frame):
             return
         if self.click_mode == "NONE":
             return
-        cid = self.bn_canvas.find_closest(x, y)
+        cid = self.bn_canvas.find_overlapping(x, y, x, y)
+        print(cid)
+        if len(cid) == 0:
+            return
         cid = cid[0]
         if cid not in self.id_to_node:
             return
@@ -298,7 +303,7 @@ class PruneGUI(ttk.Frame):
                 self.bn_canvas.itemconfig(self.nodenumber_to_id[ni], fill="red")
             else:
                 self.selected_attrs.remove(ni)
-                self.bn_canvas.itemconfig(self.nodenumber_to_id[ni], fill="")
+                self.bn_canvas.itemconfig(self.nodenumber_to_id[ni], fill=self.canvas_color)
         else:
             print("Wrong mode!")
             return
@@ -353,7 +358,8 @@ class PruneGUI(ttk.Frame):
             x = (maxx - len(L)) * 100 // 2 + offset
             for ni in L:
                 drawn_nodes[ni] = (x,y)
-                oval = self.bn_canvas.create_oval(x,y,x+30,y+30)
+                oval = self.bn_canvas.create_oval(x,y,x+30,y+30,
+                                                  fill=self.canvas_color)
                 #self.bn_canvas.itemconfig(oval, fill="red")
                 self.id_to_node[oval] = ni
                 self.nodenumber_to_id[ni] = oval
@@ -373,7 +379,10 @@ class PruneGUI(ttk.Frame):
             x2, y2 = drawn_nodes[jn.nodes[-1]]
             x2 += 30+8
             y2 += 30+8
-            tk_rounded_rect(self.bn_canvas, x1, y1, x2, y2, fill="", outline="red")
+            jn_frame = tk_rounded_rect(self.bn_canvas, x1, y1, x2, y2, fill="", outline="red")
+            # move frame down to make nodes clickable
+            for ni in self.nodenumber_to_id:
+                self.bn_canvas.tag_lower(jn_frame, self.nodenumber_to_id[ni])
         self.bn_canvas.config(scrollregion=self.bn_canvas.bbox(tk.ALL))
 
 
@@ -397,7 +406,8 @@ class PruneGUI(ttk.Frame):
         if self.bn is None:
             return
         for a in self.selected_attrs:
-            self.bn_canvas.itemconfig(self.nodenumber_to_id[a], fill="")
+            self.bn_canvas.itemconfig(self.nodenumber_to_id[a],
+                                      fill=self.canvas_color)
         self.selected_attrs = []
 
     def fill_attr_set_list(self, *callparams):
