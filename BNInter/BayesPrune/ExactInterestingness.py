@@ -12,8 +12,11 @@ def create_sop(bn):
     """create sum of products for Bayesian network BN."""
     #asop = sop.sop.array_sop(bn.n)
     asop = cached_array_sop(len(bn))
+    for jn in bn.joint_distrs:
+        asop.add_factor(jn.nodes, jn.distr.to_array())
     for i, node in enumerate(bn):
-        asop.add_factor(node.parents + [i], node.distr)
+        if not node.in_joint:
+            asop.add_factor(node.parents + [i], node.distr)
     return asop
 
 

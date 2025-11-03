@@ -45,7 +45,6 @@ def learnProbabilitiesFromData(bn, dataset, priorN = 1):
     if hasattr(dataset, "rewind"): # allow lists as datasets
         dataset.rewind()
     counts, N, missing_counts = compute_counts_dict(asets, dataset)
-    import ipdb;ipdb.set_trace()
     for jn in bn.joint_distrs:
         c = counts[tuple(jn.nodes)]
         n = N - missing_counts[tuple(jn.nodes)]

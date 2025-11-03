@@ -23,9 +23,17 @@ class BayesSampler(RecordReader):
         self.toponodes = topSort(bn)
         #self.topomap = [bn.attrnames.index(n) for n in self.toponodes] # map topsort order back to original order
         self.values = [None] * len(bn)
+        self.n_in_joint = sum(len(jn.nodes) for jn in self.bn.joint_distrs)
 
     def next(self):
-        for i in self.toponodes:
+        # sample nodes in joint distrtibutions
+        j = 0
+        for jn in self.bn.joint_distrs:
+            s = jn.distr.sample(1)[0]
+            for i in range(len(jn.nodes)):
+                self.values[self.toponodes[j+i]] = int(s[i])
+        # sample remaining nodes
+        for i in self.toponodes[self.n_in_joint:]:
             node = self.bn[i]
             if len(node.parents) == 0:
                 distr = node.distr
@@ -38,7 +46,13 @@ class BayesSampler(RecordReader):
     def draw_n_samples(self, n):
         rng = np.random.default_rng()
         sampled_vars = [None] * len(self.bn)
-        for i in self.toponodes:
+        # sample nodes in joint distrtibutions
+        j = 0
+        for jn in self.bn.joint_distrs:
+            s = jn.distr.sample(n)
+            for i in range(len(jn.nodes)):
+                sampled_vars[self.toponodes[j+i]] = s[:,i]
+        for i in self.toponodes[self.n_in_joint:]:
             node = self.bn[i]
             if len(node.parents) == 0:
                 distr = node.distr
