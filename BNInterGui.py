@@ -265,11 +265,10 @@ class PruneGUI(ttk.Frame):
             return
         cid = self.bn_canvas.find_overlapping(x, y, x, y)
         print(cid)
+        cid = [c for c in cid if c in self.id_to_node]
         if len(cid) == 0:
             return
         cid = cid[0]
-        if cid not in self.id_to_node:
-            return
         ni = self.id_to_node[cid]
         nname = self.bn[ni].name
         print(nname, "clicked")
@@ -320,7 +319,7 @@ class PruneGUI(ttk.Frame):
                 self.bn.addJointDistr(self.selected_attrs)
                 self.draw_network()
             # cleanup
-            self.click_mode == "NONE"
+            self.click_mode = "NONE"
             self.clear_selected_attrs()
             self.bn_status_bar.config(text="")
             return
@@ -381,8 +380,7 @@ class PruneGUI(ttk.Frame):
             y2 += 30+8
             jn_frame = tk_rounded_rect(self.bn_canvas, x1, y1, x2, y2, fill="", outline="red")
             # move frame down to make nodes clickable
-            for ni in self.nodenumber_to_id:
-                self.bn_canvas.tag_lower(jn_frame, self.nodenumber_to_id[ni])
+            self.bn_canvas.tag_lower(jn_frame)
         self.bn_canvas.config(scrollregion=self.bn_canvas.bbox(tk.ALL))
 
 
