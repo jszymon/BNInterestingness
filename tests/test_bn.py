@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from BNInter.BayesNet import BayesNet
-from BNInter.BayesNet import distr_2_str
 from BNInter.DataAccess import Attr
 
 @pytest.fixture
