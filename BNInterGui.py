@@ -396,7 +396,7 @@ class PruneGUI(ttk.Frame):
         #selindex = int(selindex.strip("'"))
         aset = self.listindex_to_attrset[selindex]
         print(selindex, aset)
-        self.selected_attrs = aset
+        self.selected_attrs = list(aset)
         for a in self.selected_attrs:
             self.bn_canvas.itemconfig(self.nodenumber_to_id[a], fill="red")
     def clear_selected_attrs(self):
