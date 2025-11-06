@@ -316,7 +316,11 @@ class PruneGUI(ttk.Frame):
         if self.click_mode == "JOINT_OP":
             if len(self.selected_attrs) > 1:
                 # add new joint distr
-                self.bn.addJointDistr(self.selected_attrs)
+                try:
+                    self.bn.addJointDistr(self.selected_attrs)
+                except RuntimeError as e:
+                    showerror(message = "Error: " + str(e))
+                    return
                 self.draw_network()
             # cleanup
             self.click_mode = "NONE"
