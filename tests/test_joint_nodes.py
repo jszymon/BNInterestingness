@@ -51,3 +51,12 @@ def test_file_output(basic_bayes_net, tmp_path):
 
     assert len(bn.attrs) == len(bn2.attrs)
     assert np.allclose(bn.jointP(), bn2.jointP())
+
+def test_joint_bn_del(basic_bayes_net):
+    bn = basic_bayes_net
+    orig_distr = bn.jointP()
+    bn.addJointDistr(["A", "B"])
+    joint_nodes = bn.delJointDistr("A")
+    assert len(bn.joint_distrs) == 0
+    assert np.allclose(bn.jointP(), orig_distr)
+    assert joint_nodes == bn.names_to_numbers(["A", "B"])

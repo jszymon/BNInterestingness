@@ -13,7 +13,6 @@ from BNInter.BayesNet import topSort
 from BNInter.BayesPrune.ExactInterestingness import BN_interestingness_exact
 from BNInter.BayesPrune.SamplingInterestingness import BN_interestingness_sample
 
-#from tkinter import *
 from tkinter.messagebox import askokcancel, showerror
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from tkinter import ttk
@@ -158,6 +157,8 @@ class PruneGUI(ttk.Frame):
         delb.pack(side=tk.LEFT)
         addj =ttk.Button(control_frame, text = "Add joint", command = self.add_joint)
         addj.pack(side=tk.LEFT)
+        addj =ttk.Button(control_frame, text = "Del joint", command = self.del_joint)
+        addj.pack(side=tk.LEFT)
         delallb =ttk.Button(control_frame, text = "Del all edges", command = self.del_edges)
         delallb.pack(side=tk.LEFT)
         saveasb =ttk.Button(control_frame, text = "Save as", command = self.save_net)
@@ -234,6 +235,14 @@ class PruneGUI(ttk.Frame):
         self.click_submode = "ADD"
         self.click_state = 0
 
+    def del_joint(self, *event):
+        if self.bn is None:
+            return
+        self.bn_status_bar.config(text="Select node in a joint to delete")
+        self.click_mode = "JOINT_DEL_OP"
+        self.click_submode = "DEL"
+        self.click_state = 0
+
     def save_net(self, *event):
         if self.bn is None:
             return
@@ -303,6 +312,16 @@ class PruneGUI(ttk.Frame):
             else:
                 self.selected_attrs.remove(ni)
                 self.bn_canvas.itemconfig(self.nodenumber_to_id[ni], fill=self.canvas_color)
+        elif self.click_mode == "JOINT_DEL_OP":
+            try:
+                jn_nodes = self.bn.delJointDistr(ni)
+            except RuntimeError as e:
+                showerror(message = "Error: " + str(e))
+                return
+            # select jn_nodes to make recreating/modification of joint easy
+            self.draw_network()
+            self.set_selected_attrs(jn_nodes)
+            return
         else:
             print("Wrong mode!")
             return
@@ -400,7 +419,13 @@ class PruneGUI(ttk.Frame):
         #selindex = int(selindex.strip("'"))
         aset = self.listindex_to_attrset[selindex]
         print(selindex, aset)
-        self.selected_attrs = list(aset)
+        self.set_selected_attrs(aset)
+    def set_selected_attrs(self, attrs):
+        """Mark selected attributes on the network."""
+        if self.bn is None:
+            return
+        self.clear_selected_attrs()
+        self.selected_attrs = list(attrs)
         for a in self.selected_attrs:
             self.bn_canvas.itemconfig(self.nodenumber_to_id[a], fill="red")
     def clear_selected_attrs(self):

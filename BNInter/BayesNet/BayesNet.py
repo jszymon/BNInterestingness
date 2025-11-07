@@ -144,6 +144,26 @@ class BayesNet(AttrSet):
         jn = JointNode(self, ni, distr)
         self.joint_distrs.append(jn)
         return jn
+    def delJointDistr(self, node):
+        """Deletes the joint distribution node is in.
+
+        Returns list of numbers of nodes which were in the joint.
+
+        """
+        if isinstance(node, str):
+            node = self.names_to_numbers([node])[0]
+        if not self[node].in_joint:
+            raise RuntimeError(f"Node {self[node].name} not in a joint distribution.")
+        # find joint node
+        for i, jn in enumerate(self.joint_distrs):
+            if node in jn.nodes:
+                break
+        else:
+            raise RuntimeError(f"BN inconstitent: {self[node].name} has .in_joint=True but is not in any joint distribution.")
+        for nj in jn.nodes:
+            self[nj].in_joint = False
+        self.joint_distrs.pop(i)
+        return jn.nodes
 
     def validate(self, err = 0.00001):
         """Validates the network.
