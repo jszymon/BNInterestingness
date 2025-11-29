@@ -42,7 +42,7 @@ def topSort(bn):
         else:
             indegrees[i] = L
     while len(S) > 0:
-        i = S.pop()
+        i = S.pop(0)
         sorted.append(i)
         for i2, indg in list(indegrees.items()):
             if i in bn[i2].parents:
