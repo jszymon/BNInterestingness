@@ -40,6 +40,8 @@ def read_arff_attrset(arfffile):
             aset.append_attr(Attr(strings[1], atype, domain))
         elif strings[0].lower() == "@data":
             break
+    else:
+        raise RuntimeError("@data section is missing")
     offset = f.tell()
     aset.name = relname
     return aset, offset
