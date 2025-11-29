@@ -8,15 +8,7 @@
 net 
 { 
 }
-node Akt 
-{
-  states = ( "LOW" "AVG" "HIGH" );
-}
-node Erk 
-{
-  states = ( "LOW" "AVG" "HIGH" );
-}
-node Jnk 
+node Raf 
 {
   states = ( "LOW" "AVG" "HIGH" );
 }
@@ -24,7 +16,7 @@ node Mek
 {
   states = ( "LOW" "AVG" "HIGH" );
 }
-node P38 
+node Plcg 
 {
   states = ( "LOW" "AVG" "HIGH" );
 }
@@ -36,6 +28,14 @@ node PIP3
 {
   states = ( "LOW" "AVG" "HIGH" );
 }
+node Erk 
+{
+  states = ( "LOW" "AVG" "HIGH" );
+}
+node Akt 
+{
+  states = ( "LOW" "AVG" "HIGH" );
+}
 node PKA 
 {
   states = ( "LOW" "AVG" "HIGH" );
@@ -44,11 +44,11 @@ node PKC
 {
   states = ( "LOW" "AVG" "HIGH" );
 }
-node Plcg 
+node P38 
 {
   states = ( "LOW" "AVG" "HIGH" );
 }
-node Raf 
+node Jnk 
 {
   states = ( "LOW" "AVG" "HIGH" );
 }
