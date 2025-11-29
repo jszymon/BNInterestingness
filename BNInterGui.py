@@ -464,7 +464,8 @@ class PruneGUI(ttk.Frame):
         listindex = 0
         for aset, inter in [(a,i) for a, i in asets_selected]:
             if "attrset" in mode:
-                self.attrset_list.insert(tk.END, "[" + ",".join([self.bn_interestingness.ds.attrset[i].name for i in aset]) + "] " + str(inter))
+                ### ! CHECK ! self.attrset_list.insert(tk.END, "[" + ",".join([self.bn_interestingness.ds.attrset[i].name for i in aset]) + "] " + str(inter))
+                self.attrset_list.insert(tk.END, "[" + ",".join([self.bn_interestingness.bn[i].name for i in aset]) + "] " + str(inter))
                 #print("[" + ",".join([self.bn_interestingness.ds.attrset[i].name for i in aset]) + "] " + str(inter))
                 self.listindex_to_attrset[listindex] = aset
                 listindex += 1
@@ -522,10 +523,18 @@ class PruneGUI(ttk.Frame):
         self.master.update()
 
         if self.method.get() == "Exact":
-            self.bn_interestingness = BN_interestingness_exact(self.bn, self.ds)
+            try:
+                self.bn_interestingness = BN_interestingness_exact(self.bn, self.ds)
+            except RuntimeError as e:
+                showerror(message=str(e))
+                return
             self.attr_sets_w_inter = self.bn_interestingness.run(minsup = minsup, maxK = maxK, apriori_debug = debug)
         elif self.method.get() == "Sampling":
-            self.bn_interestingness = BN_interestingness_sample(self.bn, self.ds)
+            try:
+                self.bn_interestingness = BN_interestingness_sample(self.bn, self.ds)
+            except RuntimeError as e:
+                showerror(message=str(e))
+                return                
             self.attr_sets_w_inter = self.bn_interestingness.run(maxK = maxK, n = ns,
                                                                  delta = delta,
                                                                  excluded_attrs = excluded_attrs,
@@ -552,7 +561,7 @@ class PruneGUI(ttk.Frame):
         try:
             self.ds = create_arff_reader(fname)
         except RuntimeError as e:
-            showerror(message = "Error reading data file" + str(e))
+            showerror(message = "Error reading data file: " + str(e))
             self.data_file_name.set("")
             self.bn = None
             return

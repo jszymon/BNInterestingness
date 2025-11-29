@@ -79,6 +79,10 @@ class AttrSet(object):
         names."""
         return [self.attrs[anumber].name for anumber in attrnumbers]
 
+    def get_attr_names(self):
+        """Return names of all nodes in order."""
+        return [attr.name for attr in self.attrs]
+
     def append_attr(self, attr):
         self.attrs.append(attr)
         self.names_2_numbers_map[attr.name] = len(self) - 1

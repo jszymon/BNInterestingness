@@ -231,6 +231,10 @@ class BN_interestingness_sample(object):
     def __init__(self, bn, ds, sample_from_data = False, ND = 1000000):
         self.bn = bn
         self.ds = ds
+        # chack attribute names match
+        # TODO: reorder them
+        if self.bn.get_attr_names() != self.ds.attrset.get_attr_names():
+            raise RuntimeError("Attribute lists don't match. Dataset and BayesNet must have the same attribute names in the same order.")
         self.domainsizes = [len(a.domain) for a in self.ds.attrset]
         self.nattrs = len(self.ds.attrset)
         self.sample_from_data = sample_from_data

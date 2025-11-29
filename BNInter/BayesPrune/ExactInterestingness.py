@@ -50,7 +50,10 @@ class BN_interestingness_exact(object):
     def __init__(self, bn, ds):
         self.bn = bn
         self.ds = ds
-
+        # chack attribute names match
+        # TODO: reorder them
+        if self.bn.get_attr_names() != self.ds.attrset.get_attr_names():
+            raise RuntimeError("Attribute lists don't match. Dataset and BayesNet must have the same attribute names in the same order.")
 
     def compute_frequent_attr_sets_in_data(self, minsup, maxK, apriori_debug):
         self.ds.rewind()
