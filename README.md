@@ -78,4 +78,8 @@ The following network should appear:
 
 ![Background knowledge](assets/images/network_paper.png)
 
+We can now re-run pattern discovery.
 
+## Other examples
+
+Sachs network
