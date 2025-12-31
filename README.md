@@ -54,6 +54,8 @@ Let us now discover interesting patterns.  In the pattern window you
 can select the algorithm to use (sampling based or exact) as well as
 its parameters:
 
+![Params](assets/images/params.png)
+
 * `max pattern size` maximum size of the discovered pattern
 * `min inter` minimum interestingness level of patterns which is used
   for pruning.  Expressed as the minimum number of records of
@@ -65,10 +67,37 @@ its parameters:
 * `error prob.` upper bound probability that one of the top patterns
   is incorrect (only affects the sampling based algorithm).
 
-Select the `exact` algorithm (faster for tiny data) and click the
-`Run` button.
+Select the `exact` algorithm (faster for data with small number of
+variables) and click the `Run` button.  Discovered patterns appear in
+the pattern window.
 
-You can now load a Bayesian network representing background knowledge.
+![Indep patterns](assets/images/indep_patterns.png)
+
+After clicking a patterns, its variables get highlighted in the
+Bayesian network window.  The most interesting pattern is
+`Smok,Alc,Sex,Year` and the set of values whose probability in data
+and Bayesian network differs most is
+
+```
+Smok=Y,Alc=Y,Sex=Male,Year=1984
+```
+
+The full patterns is not easy to interpret, it is a result of several
+sub-dependencies between study year, sex, alcohol consumption and
+smoking.  We will see it disappear once more comprehensive background
+knowledge is included in the process.
+
+At the bottom of the pattern window there are fields which allow for
+filtering discovered patterns.  Let us set `max shown pattern size`
+to 2.  The most interesting pattern of size two is `FEV,Sex`.  This
+pattern is easy to interpret: women have on average smaller lungs.
+
+We should now update background knowledge to reflect this fact.  To
+this end 
+
+### Using background knowledge
+
+Let us now load a Bayesian network representing background knowledge.
 Click the `Browse` button next to `Bayes net` field in the patterns
 window and select the `data/ksl_discr.net` file.  The background
 knowledge comes from [[1]](#1) and represents the authors' common sense
@@ -79,6 +108,11 @@ The following network should appear:
 ![Background knowledge](assets/images/network_paper.png)
 
 We can now re-run pattern discovery.
+
+## Joint nodes
+
+You can also highlight nodes by clicking a pattern and then click `Add
+joint` to create a joint node.
 
 ## Other examples
 
