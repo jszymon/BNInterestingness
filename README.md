@@ -84,7 +84,7 @@ Smok=Y,Alc=Y,Sex=Male,Year=1984
 
 The full patterns is not easy to interpret, it is a result of several
 sub-dependencies between study year, sex, alcohol consumption and
-smoking.  We will see it disappear once more comprehensive background
+smoking.  We will see it disappear when more comprehensive background
 knowledge is included in the process.
 
 At the bottom of the pattern window there are fields which allow for
@@ -92,10 +92,26 @@ filtering discovered patterns.  Let us set `max shown pattern size`
 to 2.  The most interesting pattern of size two is `FEV,Sex`.  This
 pattern is easy to interpret: women have on average smaller lungs.
 
-We should now update background knowledge to reflect this fact.  To
-this end 
+We should now update background knowledge to reflect this fact.  Since
+person's `Sex` is the cause of smaller lung volume we will add an edge
+from `Sex` to `FEV`.  Click `Add Edge` in the Bayesian network window,
+then click `Sex` (*from* node) and `FEV` (*to* node).  The change is
+reflected in the Bayesian network display:
 
-### Using background knowledge
+![Empty Bayesian network](assets/images/indep_Sex_FEV.png)
+
+If you click the `Run` button again the `FEV,Sex` is no longer
+interesting, it has been explained away by background knowledge.  The
+new to pattern is the relationship between smoking and sex:
+
+![Empty Bayesian network](assets/images/indep_Sex_FEV_patterns.png)
+
+with less women being smokers than men.
+
+We could now continue adding more edges to the network to explain more
+patterns.  Instead, we will load a predefined background knowledge.
+
+## Using background knowledge
 
 Let us now load a Bayesian network representing background knowledge.
 Click the `Browse` button next to `Bayes net` field in the patterns
