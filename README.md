@@ -123,13 +123,67 @@ The following network should appear:
 
 ![Background knowledge](assets/images/network_paper.png)
 
-We can now re-run pattern discovery.
+We can now re-run pattern discovery.  Set `max shown pattern size`
+back to 5 and click the `Run` button.
+
+![Patterns wrt background knowledge](assets/images/ksl_patterns_1.png)
+
+We need to update the background knowledge to include the relationship
+between `Sex` and `FEV`.  An edge from `Year` to `Alc` is also
+plausible: drinking behavior could have changed over the years.  The
+updated network is
+
+![Patterns wrt background knowledge](assets/images/ksl_network_2.png)
+
+After adding those edges new patterns become the most interesting:
+
+![Patterns wrt background knowledge](assets/images/ksl_patterns_2.png)
+
+Now the most interesting patterns involve study year, sex, and
+cholesterol level (`Kol`).  We update background knowledge by adding
+two edges indicating the causal dependence of cholesterol on `Year`
+and `Sex`.
+
+The updated network is
+
+![Patterns wrt background knowledge](assets/images/ksl_network_3.png)
+
+After adding those edges new patterns become the most interesting:
+
+![Patterns wrt background knowledge](assets/images/ksl_patterns_3.png)
+
+The top patterns are now much harder to explain, probably the result
+of spurious correlations.  We may finish the discovery process.
 
 ## Joint nodes
+
+Sometimes there is a set of variables which are dependent but do not
+causally influence each other in a simple way.  For example they are
+all influenced by latent variables not present in the data.  In this
+case it is possible to create a `Joint node' which will model the
+joint distribution of several variables.  Variables in a joint node
+cannot have parents.
+
+To create a joint node, press the `Add joint` button in the Bayesian
+network window, then select variables with left mouse button, and
+finish creating the node with a right click.
+
+For example, if you believe `Sex` and `Year` are related due to study
+design, you could model them as a joint node.  Joint nodes are marked
+with red frames:
+
+![Network with joint node](assets/images/ksl_joint.png)
 
 You can also highlight nodes by clicking a pattern and then click `Add
 joint` to create a joint node.
 
 ## Other examples
 
-Sachs network
+Another example is the well known Sachs network and dataset from
+
+<a id="4">[4]</a> K. Sachs et al., *Causal protein-signaling networks
+derived from multiparameter single-cell data*, Science 309(5738):1187,
+2005.
+
+Some interesting patterns not found in the published network can be
+found using the package.
