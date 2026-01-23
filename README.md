@@ -23,7 +23,7 @@ After you type `python BNInterGUI.py` two windows will appear:
 ![Network window](assets/images/start_network.png)
 ![Patterns window](assets/images/start_patterns.png)
 
-the left window show the Bayesian network describing current
+the left window shows the Bayesian network describing current
 background knowledge, the right window displays interesting patterns.
 Currently both windows are empty.
 
@@ -33,9 +33,9 @@ Let us now load an example dataset.  Click the `Browse` button next to
 
 ![Empty Bayesian network](assets/images/network_empty.png)
 
-meaning that to all variables assumed to be independent.
+meaning that all variables are assumed to be independent.
 
-Let us now briefly describe the dataset which comes from the `deal' R
+Let us now briefly describe the dataset which comes from the `deal` R
 package.  The dataset contains data on elderly Danes collected in 1967
 and 1984.  All numerical variables are discretized into three levels
 0,1,2.  Full variable list:
@@ -59,7 +59,7 @@ its parameters:
 * `max pattern size` maximum size of the discovered pattern
 * `min inter` minimum interestingness level of patterns which is used
   for pruning.  Expressed as the minimum number of records of
-  difference in pattern freqeuncy in data and based on Bayesian
+  difference in pattern frequency in data and based on Bayesian
   network prediction.
 * `# best patterns to find` only affects the sampling based algorithm.
   More patterns are actually found, but this number is guaranteed to
@@ -73,7 +73,7 @@ the pattern window.
 
 ![Indep patterns](assets/images/indep_patterns.png)
 
-After clicking a patterns, its variables get highlighted in the
+After clicking a pattern, its variables get highlighted in the
 Bayesian network window.  The most interesting pattern is
 `Smok,Alc,Sex,Year` and the set of values whose probability in data
 and Bayesian network differs most is
@@ -82,7 +82,7 @@ and Bayesian network differs most is
 Smok=Y,Alc=Y,Sex=Male,Year=1984
 ```
 
-The full patterns is not easy to interpret, it is a result of several
+The full pattern is not easy to interpret, it is a result of several
 sub-dependencies between study year, sex, alcohol consumption and
 smoking.  We will see it disappear when more comprehensive background
 knowledge is included in the process.
@@ -102,11 +102,11 @@ reflected in the Bayesian network display:
 
 If you click the `Run` button again the `FEV,Sex` is no longer
 interesting, it has been explained away by background knowledge.  The
-new to pattern is the relationship between smoking and sex:
+new pattern is the relationship between smoking and sex:
 
 ![Empty Bayesian network](assets/images/indep_Sex_FEV_patterns.png)
 
-with less women being smokers than men.
+with fewer women being smokers than men.
 
 We could now continue adding more edges to the network to explain more
 patterns.  Instead, we will load a predefined background knowledge.
@@ -160,7 +160,7 @@ of spurious correlations.  We may finish the discovery process.
 Sometimes there is a set of variables which are dependent but do not
 causally influence each other in a simple way.  For example they are
 all influenced by latent variables not present in the data.  In this
-case it is possible to create a `Joint node' which will model the
+case it is possible to create a `Joint node` which will model the
 joint distribution of several variables.  Variables in a joint node
 cannot have parents.
 
