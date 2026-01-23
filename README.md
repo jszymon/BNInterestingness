@@ -13,6 +13,7 @@ This software is based on the following papers:
 * the numpy package
 
 ## How to run the code:
+* download the package [source](https://github.com/jszymon/BNInterestingness/archive/refs/heads/main.zip)
 * unpack the source
 * change to the top level source directory
 * type `python BNInterGUI.py`
@@ -23,7 +24,7 @@ After you type `python BNInterGUI.py` two windows will appear:
 ![Network window](assets/images/start_network.png)
 ![Patterns window](assets/images/start_patterns.png)
 
-the left window shows the Bayesian network describing current
+The left window shows the Bayesian network describing current
 background knowledge, the right window displays interesting patterns.
 Currently both windows are empty.
 
@@ -38,7 +39,7 @@ meaning that all variables are assumed to be independent.
 Let us now briefly describe the dataset which comes from the `deal` R
 package.  The dataset contains data on elderly Danes collected in 1967
 and 1984.  All numerical variables are discretized into three levels
-0,1,2.  Full variable list:
+0,1,2.  Full variable list is given below:
 
 * **FEV**  Forced Ejection Volume (lung capacity)
 * **Kol**  Cholesterol
@@ -62,10 +63,10 @@ its parameters:
   difference in pattern frequency in data and based on Bayesian
   network prediction.
 * `# best patterns to find` only affects the sampling based algorithm.
-  More patterns are actually found, but this number is guaranteed to
-  be statistically correct.
-* `error prob.` upper bound probability that one of the top patterns
-  is incorrect (only affects the sampling based algorithm).
+  More patterns are actually found, but this number of top patterns is
+  guaranteed to be statistically correct.
+* `error prob.` upper bound on the probability that one of the top
+  patterns is incorrect (only affects the sampling based algorithm).
 
 Select the `exact` algorithm (faster for data with small number of
 variables) and click the `Run` button.  Discovered patterns appear in
@@ -100,16 +101,17 @@ reflected in the Bayesian network display:
 
 ![Empty Bayesian network](assets/images/indep_Sex_FEV.png)
 
-If you click the `Run` button again the `FEV,Sex` is no longer
-interesting, it has been explained away by background knowledge.  The
-new pattern is the relationship between smoking and sex:
+If you click the `Run` button again, the `FEV,Sex` pattern is no
+longer interesting, it has been explained away by background
+knowledge.  The new pattern is the relationship between smoking and
+sex:
 
 ![Empty Bayesian network](assets/images/indep_Sex_FEV_patterns.png)
 
 with fewer women being smokers than men.
 
 We could now continue adding more edges to the network to explain more
-patterns.  Instead, we will load a predefined background knowledge.
+patterns.  Instead, we will load predefined background knowledge.
 
 ## Using background knowledge
 
@@ -130,12 +132,12 @@ back to 5 and click the `Run` button.
 
 We need to update the background knowledge to include the relationship
 between `Sex` and `FEV`.  An edge from `Year` to `Alc` is also
-plausible: drinking behavior could have changed over the years.  The
-updated network is
+plausible (second most interesting pattern): drinking behavior could
+have changed over the years.  The updated network is
 
 ![Patterns wrt background knowledge](assets/images/ksl_network_2.png)
 
-After adding those edges new patterns become the most interesting:
+After adding those edges new patterns become interesting:
 
 ![Patterns wrt background knowledge](assets/images/ksl_patterns_2.png)
 
@@ -148,12 +150,13 @@ The updated network is
 
 ![Patterns wrt background knowledge](assets/images/ksl_network_3.png)
 
-After adding those edges new patterns become the most interesting:
+After adding those edges new patterns become interesting:
 
 ![Patterns wrt background knowledge](assets/images/ksl_patterns_3.png)
 
-The top patterns are now much harder to explain, probably the result
-of spurious correlations.  We may finish the discovery process.
+The top patterns are now much harder to explain, and are most probably
+the result of spurious correlations.  We may finish the discovery
+process.
 
 ## Joint nodes
 
@@ -168,9 +171,9 @@ To create a joint node, press the `Add joint` button in the Bayesian
 network window, then select variables with left mouse button, and
 finish creating the node with a right click.
 
-For example, if you believe `Sex` and `Year` are related due to study
-design, you could model them as a joint node.  Joint nodes are marked
-with red frames:
+For example, if you believe `Sex` and `Year` are related due to the
+study design, you could model them as a joint node.  Joint nodes are
+marked with red frames:
 
 ![Network with joint node](assets/images/ksl_joint.png)
 
@@ -185,5 +188,5 @@ Another example is the well known Sachs network and dataset from
 derived from multiparameter single-cell data*, Science 309(5738):1187,
 2005.
 
-Some interesting patterns not found in the published network can be
+Some interesting patterns not included in the published network can be
 found using the package.
