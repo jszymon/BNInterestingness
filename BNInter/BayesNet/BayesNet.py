@@ -5,6 +5,7 @@ import numpy as np
 from ..DataAccess import Attr, AttrSet
 from .BNutils import blockiter, distr_2_str
 from ..Utils import SparseDistr
+from .NoisyOR import NoisyOR
     
 
 
@@ -20,6 +21,84 @@ class BayesNode(Attr):
         self.nd = len(self.domain)
         self.in_joint = False  # whether the node is member of a joint distribution
         self.distr = np.full(self.nd, + 1.0/self.nd)
+        # None for nodes given by a conditional probability table.  For
+        # Noisy-OR nodes a dict {'leak': p, 'inhibit': {parent_number: p}}.
+        self.noisy_or = None
+        # None, or a dict {'C': C, 'standardize': bool} for nodes whose
+        # table is given by a logistic regression learned from data.
+        self.logistic = None
+
+    def is_noisy_or(self):
+        return self.noisy_or is not None
+
+    def is_logistic(self):
+        return self.logistic is not None
+
+    def distr_type(self):
+        """Return 'CPT', 'NoisyOR' or 'Logistic'."""
+        if self.noisy_or is not None:
+            return 'NoisyOR'
+        if self.logistic is not None:
+            return 'Logistic'
+        return 'CPT'
+
+    def set_logistic(self, C = float("inf"), standardize = True):
+        """Make the node's table a logistic regression of its parents.
+
+        The table is (re)computed when probabilities are learned from
+        data.  C is the inverse regularization strength as in
+        scikit-learn (inf: no regularization); standardize says whether
+        the (one-hot encoded) parents are standardized."""
+        if self.in_joint:
+            raise ValueError(f"Node {self.name} is part of a joint distribution.")
+        C = float(C)
+        if not C > 0:
+            raise ValueError(f"C must be positive (inf for no regularization), got {C}.")
+        self.noisy_or = None
+        self.logistic = {'C': C, 'standardize': bool(standardize)}
+
+    def set_noisy_or(self, leak = 1.0, inhibit = None):
+        """Make the node a Noisy-OR gate of its current parents.
+
+        The last value of the node and of each parent means ON, all
+        other values mean OFF; the node must be binary.  leak is the
+        inhibition probability of an always-ON cause, i.e. the
+        probability that the node is OFF when all parents are OFF.
+        inhibit maps parents (names or numbers) to the probability that
+        the parent being ON fails to turn the node ON.  Parents missing
+        from inhibit get 1.0 (no influence)."""
+        if self.nd != 2:
+            raise ValueError(f"Noisy-OR node {self.name} must have exactly 2 values, has {self.nd}.")
+        if self.in_joint:
+            raise ValueError(f"Node {self.name} is part of a joint distribution.")
+        inh = {}
+        for k, p in (inhibit or {}).items():
+            if isinstance(k, str):
+                k = self.bnet.names_to_numbers([k])[0]
+            if k not in self.parents:
+                raise ValueError(f"{self.bnet[k].name} is not a parent of {self.name}.")
+            inh[k] = float(p)
+        for p in [leak] + list(inh.values()):
+            if not 0.0 <= p <= 1.0:
+                raise ValueError(f"Probability {p} not in [0, 1].")
+        self.logistic = None
+        self.noisy_or = {'leak': float(leak), 'inhibit': inh}
+        self.update_noisy_or_distr()
+
+    def update_noisy_or_distr(self):
+        """Recompute the probability table of a Noisy-OR node."""
+        shape = [self.bnet[i].nd for i in self.parents]
+        nor = NoisyOR(list(self.parents), shape)
+        nor.add_variable("true", self.noisy_or['leak'])
+        for i, p in self.noisy_or['inhibit'].items():
+            nor.add_variable(i, p)
+        self.distr = nor.get_table()
+
+    def set_cpt(self):
+        """Make the node use a plain conditional probability table
+        (the current table is kept)."""
+        self.noisy_or = None
+        self.logistic = None
 
     def fix_data(self):
         """Fix node params which are known only after the full network is created"""
@@ -46,9 +125,13 @@ class BayesNode(Attr):
         self.parents = parents
         # TODO: verify distr size
         self.distr = distr
+        self.noisy_or = None
+        self.logistic = None
 
     def del_all_parents(self):
         self.parents = []
+        self.noisy_or = None
+        self.logistic = None
         nd = len(self.domain)
         self.distr = np.zeros(nd) + 1.0/nd
 
@@ -58,6 +141,11 @@ class BayesNode(Attr):
         if self.in_joint:
             ret += "\nPart of a joint distribution\n"
         else:
+            if self.noisy_or is not None:
+                inh = {self.bnet[i].name: p for i, p in self.noisy_or['inhibit'].items()}
+                ret += f"\nNoisy-OR: leak={self.noisy_or['leak']:g} inhibit={inh}"
+            if self.logistic is not None:
+                ret += f"\nLogistic regression: C={self.logistic['C']:g} standardize={self.logistic['standardize']}"
             ret += "\nDistribution:\n" + distr_2_str(self.distr, cond = True)
         return ret
 
@@ -106,6 +194,8 @@ class BayesNet(AttrSet):
         # TODO: check if cycles aren't introduced
         dst_node.distr = np.array([dst_node.distr] * len(src_node.domain))
         dst_node.parents.insert(0,i)
+        if dst_node.is_noisy_or():
+            dst_node.update_noisy_or_distr()
 
     def delEdge(self, src_name, dst_name):
         """Delete the edge from attribute src_name to attribute dst_name.""" 
@@ -115,6 +205,9 @@ class BayesNet(AttrSet):
             raise RuntimeError("Edge does not exist")
         dst_node.distr = np.sum(dst_node.distr, dst_node.parents.index(i)) / 2
         del dst_node.parents[dst_node.parents.index(i)]
+        if dst_node.is_noisy_or():
+            dst_node.noisy_or['inhibit'].pop(i, None)
+            dst_node.update_noisy_or_distr()
 
     def addJointDistr(self, nodes, distr=None):
         """Declares that given nodes will be modeled using their joint
@@ -141,6 +234,8 @@ class BayesNet(AttrSet):
                 raise RuntimeError(f"Nodes in a joint distribution cannot have parents (node {name}).")
         for i in ni:
             self[i].in_joint = True
+            self[i].noisy_or = None
+            self[i].logistic = None
         jn = JointNode(self, ni, distr)
         self.joint_distrs.append(jn)
         return jn

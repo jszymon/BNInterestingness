@@ -11,6 +11,7 @@ This software is based on the following papers:
 ## What you need:
 * Python 3.x
 * the numpy package
+* the scikit-learn package (for logistic regression node distributions)
 
 ## How to run the code:
 * download the package [source](https://github.com/jszymon/BNInterestingness/archive/refs/heads/main.zip)

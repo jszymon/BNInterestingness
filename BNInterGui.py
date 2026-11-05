@@ -7,9 +7,10 @@ from os.path import basename, dirname
 import time
 
 from BNInter.DataAccess import Attr, create_arff_reader
-from BNInter.BayesNet import BayesNet, read_Hugin_file, write_Hugin_file
+from BNInter.BayesNet import BayesNet, read_Hugin_file, write_Hugin_file, distr_2_str
 import BNInter.BayesNet.BayesNetLearn
 from BNInter.BayesNet import topSort
+from BNInter.BayesNet.LogisticCPT import logistic_cpt
 from BNInter.BayesPrune.ExactInterestingness import BN_interestingness_exact
 from BNInter.BayesPrune.SamplingInterestingness import BN_interestingness_sample
 
@@ -36,6 +37,223 @@ maxK = 5
 
 
 
+
+
+class NodeDistrDialog(tk.Toplevel):
+    """Dialog for choosing a node's distribution type and its parameters."""
+    def __init__(self, master, bn, node_number, on_change = None, get_counts = None):
+        """get_counts: function returning the data counts of the node and
+        its parents (used to fit logistic regression), or None if no
+        data is available."""
+        super().__init__(master)
+        self.bn = bn
+        self.node = bn[node_number]
+        self.on_change = on_change
+        self.get_counts = get_counts
+        self._counts = None
+        self.title("Node " + self.node.name)
+        self.transient(master)
+
+        frame = ttk.Frame(self, padding = 8)
+        frame.pack(fill=tk.BOTH, expand=1)
+
+        ttk.Label(frame, text = "Node: " + self.node.name + "   values: " + str(self.node.domain)).pack(anchor=tk.W)
+        parents = [bn[i].name for i in self.node.parents]
+        ttk.Label(frame, text = "Parents: " + (", ".join(parents) if parents else "none")).pack(anchor=tk.W)
+
+        self.distr_type = tk.StringVar(value = self.node.distr_type())
+        type_frame = ttk.LabelFrame(frame, text = "Distribution type", padding = 4)
+        type_frame.pack(fill=tk.X, pady=4)
+        ttk.Radiobutton(type_frame, text = "Conditional probability table (learned from data)",
+                        variable = self.distr_type, value = "CPT",
+                        command = self.type_changed).pack(anchor=tk.W)
+        nor_rb = ttk.Radiobutton(type_frame, text = "Noisy-OR (parameters given below)",
+                                 variable = self.distr_type, value = "NoisyOR",
+                                 command = self.type_changed)
+        nor_rb.pack(anchor=tk.W)
+        lr_rb = ttk.Radiobutton(type_frame, text = "Logistic regression (learned from data)",
+                                variable = self.distr_type, value = "Logistic",
+                                command = self.type_changed)
+        lr_rb.pack(anchor=tk.W)
+        reasons = []
+        if self.node.in_joint:
+            nor_rb.state(["disabled"])
+            lr_rb.state(["disabled"])
+            reasons.append("Node is part of a joint distribution.")
+        elif self.node.nd != 2:
+            nor_rb.state(["disabled"])
+            reasons.append("Noisy-OR requires a binary node.")
+        for r in reasons:
+            ttk.Label(type_frame, text = r, foreground = "red").pack(anchor=tk.W)
+
+        # Noisy-OR parameters
+        self.nor_frame = ttk.LabelFrame(frame, text = "Noisy-OR parameters", padding = 4)
+        self.nor_frame.pack(fill=tk.X, pady=4)
+        ttk.Label(self.nor_frame, justify = tk.LEFT, wraplength = 420,
+                  text = "The last value of each variable means ON; all other values mean OFF. "
+                  "Inhibition probability of a parent: probability that the parent being ON "
+                  "does not turn the node ON. Leak inhibition: probability that the node is OFF "
+                  "when all parents are OFF."
+                  ).grid(row = 0, column = 0, columnspan = 3, sticky = tk.W)
+        cur = self.node.noisy_or or {'leak': 1.0, 'inhibit': {}}
+        self.param_vars = []  # (parent number or None for leak, StringVar, Entry)
+        rows = [(None, "Leak inhibition (P(" + self.node.name + "=" + str(self.node.domain[0]) + " | all parents OFF))",
+                 cur['leak'])]
+        for pi in self.node.parents:
+            pn = bn[pi]
+            rows.append((pi, "Inhibition of " + pn.name + " (ON value: " + str(pn.domain[-1]) + ")",
+                         cur['inhibit'].get(pi, 1.0)))
+        for r, (pi, label, val) in enumerate(rows, start = 1):
+            ttk.Label(self.nor_frame, text = label).grid(row = r, column = 0, sticky = tk.W)
+            var = tk.StringVar(value = f"{val:g}")
+            ent = ttk.Entry(self.nor_frame, textvariable = var, width = 10)
+            ent.grid(row = r, column = 1, sticky = tk.W, padx = 4)
+            self.param_vars.append((pi, var, ent))
+            var.trace_add("write", lambda *a: self.update_preview())
+
+        # logistic regression parameters
+        self.lr_frame = ttk.LabelFrame(frame, text = "Logistic regression parameters", padding = 4)
+        self.lr_frame.pack(fill=tk.X, pady=4)
+        ttk.Label(self.lr_frame, justify = tk.LEFT, wraplength = 420,
+                  text = "Parents are one-hot encoded. C is the inverse regularization strength "
+                  "(smaller C = stronger regularization; inf = no regularization)."
+                  ).grid(row = 0, column = 0, columnspan = 3, sticky = tk.W)
+        cur = self.node.logistic or {'C': float("inf"), 'standardize': True}
+        ttk.Label(self.lr_frame, text = "C").grid(row = 1, column = 0, sticky = tk.W)
+        self.lr_C = tk.StringVar(value = f"{cur['C']:g}")
+        self.lr_C_entry = ttk.Entry(self.lr_frame, textvariable = self.lr_C, width = 10)
+        self.lr_C_entry.grid(row = 1, column = 1, sticky = tk.W, padx = 4)
+        self.lr_std = tk.BooleanVar(value = cur['standardize'])
+        self.lr_std_cb = ttk.Checkbutton(self.lr_frame, text = "Standardize variables",
+                                         variable = self.lr_std)
+        self.lr_std_cb.grid(row = 2, column = 0, columnspan = 2, sticky = tk.W)
+        self.lr_C.trace_add("write", lambda *a: self.update_preview())
+        self.lr_std.trace_add("write", lambda *a: self.update_preview())
+
+        # preview of the resulting table
+        prev_frame = ttk.LabelFrame(frame, text = "Distribution", padding = 4)
+        prev_frame.pack(fill=tk.BOTH, expand=1, pady=4)
+        self.preview = tk.Text(prev_frame, height = 10, width = 50)
+        self.preview.pack(fill=tk.BOTH, expand=1)
+        self.error_label = ttk.Label(frame, text = "", foreground = "red")
+        self.error_label.pack(anchor=tk.W)
+
+        buttons = ttk.Frame(frame)
+        buttons.pack(fill=tk.X)
+        ttk.Button(buttons, text = "Cancel", command = self.destroy).pack(side=tk.RIGHT)
+        self.ok_button = ttk.Button(buttons, text = "OK", command = self.ok)
+        self.ok_button.pack(side=tk.RIGHT)
+        self.bind("<Escape>", lambda e: self.destroy())
+        self.bind("<Return>", lambda e: self.ok())
+
+        self.type_changed()
+        self.grab_set()
+
+    def counts(self):
+        """Data counts for the node (computed once), or None without data."""
+        if self._counts is None and self.get_counts is not None:
+            self._counts = self.get_counts()
+        return self._counts
+
+    def read_noisy_or_params(self):
+        """Return (leak, inhibit dict); raise ValueError on bad input."""
+        leak = None
+        inhibit = {}
+        for pi, var, ent in self.param_vars:
+            try:
+                p = float(var.get())
+            except ValueError:
+                raise ValueError("'" + var.get() + "' is not a number")
+            if not 0.0 <= p <= 1.0:
+                raise ValueError(f"Probability {p:g} not in [0, 1]")
+            if pi is None:
+                leak = p
+            else:
+                inhibit[pi] = p
+        return leak, inhibit
+
+    def read_logistic_params(self):
+        """Return (C, standardize); raise ValueError on bad input."""
+        try:
+            C = float(self.lr_C.get())
+        except ValueError:
+            raise ValueError("'" + self.lr_C.get() + "' is not a number")
+        if not C > 0:
+            raise ValueError("C must be positive (inf for no regularization)")
+        return C, self.lr_std.get()
+
+    def type_changed(self):
+        t = self.distr_type.get()
+        nor_state = ["!disabled"] if t == "NoisyOR" else ["disabled"]
+        for pi, var, ent in self.param_vars:
+            ent.state(nor_state)
+        lr_state = ["!disabled"] if t == "Logistic" else ["disabled"]
+        self.lr_C_entry.state(lr_state)
+        self.lr_std_cb.state(lr_state)
+        self.update_preview()
+
+    def new_distr(self):
+        """Distribution table resulting from the dialog settings (None if
+        it cannot be computed yet).  Raises ValueError on bad input."""
+        t = self.distr_type.get()
+        if t == "NoisyOR":
+            leak, inhibit = self.read_noisy_or_params()
+            # compute on a temporary copy of the node's settings
+            saved = (self.node.noisy_or, self.node.logistic, self.node.distr)
+            try:
+                self.node.set_noisy_or(leak, inhibit)
+                return self.node.distr
+            finally:
+                self.node.noisy_or, self.node.logistic, self.node.distr = saved
+        elif t == "Logistic":
+            C, standardize = self.read_logistic_params()
+            counts = self.counts()
+            if counts is None:
+                return None
+            return logistic_cpt(counts, C, standardize)
+        return self.node.distr
+
+    def update_preview(self):
+        self.error_label.config(text = "")
+        self.ok_button.state(["!disabled"])
+        if self.node.in_joint:
+            text = "Part of a joint distribution"
+        else:
+            try:
+                distr = self.new_distr()
+            except ValueError as e:
+                self.error_label.config(text = str(e))
+                self.ok_button.state(["disabled"])
+                return
+            if distr is None:
+                text = "No (matching) data loaded.\nThe table will be fitted when probabilities are learned from data."
+            else:
+                text = distr_2_str(distr, cond = True)
+        self.preview.config(state = tk.NORMAL)
+        self.preview.delete("1.0", tk.END)
+        self.preview.insert(tk.END, text)
+        self.preview.config(state = tk.DISABLED)
+
+    def ok(self):
+        t = self.distr_type.get()
+        try:
+            if t == "NoisyOR":
+                leak, inhibit = self.read_noisy_or_params()
+                self.node.set_noisy_or(leak, inhibit)
+            elif t == "Logistic":
+                C, standardize = self.read_logistic_params()
+                distr = self.new_distr()
+                self.node.set_logistic(C, standardize)
+                if distr is not None:
+                    self.node.distr = distr
+            else:
+                self.node.set_cpt()
+        except ValueError as e:
+            showerror(message = str(e), parent = self)
+            return
+        self.destroy()
+        if self.on_change is not None:
+            self.on_change()
 
 
 class PruneGUI(ttk.Frame):
@@ -199,6 +417,7 @@ class PruneGUI(ttk.Frame):
         self.click_state = 0
         self.bn_canvas.bind("<Button-1>", self.bn_canvas_clicked)
         self.bn_canvas.bind("<Button-3>", self.bn_canvas_right_clicked)
+        self.bn_canvas.bind("<Double-Button-1>", self.bn_canvas_double_clicked)
 
 
     def must_have_attr_changed(self, *event):
@@ -333,6 +552,31 @@ class PruneGUI(ttk.Frame):
             print("Wrong mode!")
             return
 
+    def bn_canvas_double_clicked(self, event):
+        """Open the node distribution dialog."""
+        if self.bn is None or self.click_mode != "NONE":
+            return
+        x = self.bn_canvas.canvasx(event.x)
+        y = self.bn_canvas.canvasy(event.y)
+        cid = [c for c in self.bn_canvas.find_overlapping(x, y, x, y) if c in self.id_to_node]
+        if len(cid) == 0:
+            return
+        ni = self.id_to_node[cid[0]]
+        def changed():
+            # parameters don't affect the structure (or BDeu); only restyle the node
+            self.bn_canvas.itemconfig(self.nodenumber_to_id[ni], **self.node_style(ni))
+            self.bn_status_bar.config(text = "Distribution of " + self.bn[ni].name + " changed")
+        get_counts = None
+        if self.ds is not None and self.bn.get_attr_names() == self.ds.attrset.get_attr_names():
+            get_counts = lambda: BNInter.BayesNet.BayesNetLearn.nodeCounts(self.bn, ni, self.ds)
+        NodeDistrDialog(self.bn_window, self.bn, ni, on_change = changed, get_counts = get_counts)
+
+    def node_style(self, ni):
+        """Outline of a node's oval depending on its distribution type."""
+        return {"NoisyOR": dict(outline="blue", width=3),
+                "Logistic": dict(outline="darkgreen", width=3),
+                }.get(self.bn[ni].distr_type(), dict(outline="black", width=1))
+
     def bn_canvas_right_clicked(self, event):
         #print("clicked at", event.x, event.y)
         x = self.bn_canvas.canvasx(event.x)
@@ -387,8 +631,8 @@ class PruneGUI(ttk.Frame):
             x = (maxx - len(L)) * 100 // 2 + offset
             for ni in L:
                 drawn_nodes[ni] = (x,y)
-                oval = self.bn_canvas.create_oval(x,y,x+30,y+30,
-                                                  fill=self.canvas_color)
+                oval = self.bn_canvas.create_oval(x,y,x+30,y+30, fill=self.canvas_color,
+                                                  **self.node_style(ni))
                 #self.bn_canvas.itemconfig(oval, fill="red")
                 self.id_to_node[oval] = ni
                 self.nodenumber_to_id[ni] = oval

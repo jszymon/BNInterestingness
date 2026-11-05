@@ -212,6 +212,19 @@ def read_Hugin_file(file_name):
             conditioned_on = [ids_2_numbers[c] for c in p.conditioned_on]
             if len(targets) == 1:  # ordinary node
                 bn[targets[0]].set_parents_distr(conditioned_on, distr)
+                if 'model_data' in p.params and 'data' not in p.params:
+                    leak = 1.0
+                    inhibit = {}
+                    for vname, prb in p.params['model_data'][0][1:]:
+                        if vname == "true":
+                            leak = prb
+                        else:
+                            inhibit[ids_2_numbers[vname]] = prb
+                    bn[targets[0]].set_noisy_or(leak, inhibit)
+                if p.params.get('BNInter_model') == "LogisticRegression":
+                    bn[targets[0]].set_logistic(
+                        float(p.params.get('BNInter_LR_C', "inf")),
+                        p.params.get('BNInter_LR_standardize', "1") == "1")
             else:
                 # joint node
                 if len(conditioned_on) > 0:
@@ -252,7 +265,18 @@ def write_Hugin_file(bn, f):
                 cond = ""
             print("\npotential ( V_" + str(i) + cond + ")", file=f)
             print("{", file=f)
-            print("  data = (" + " ".join([str(x) for x in n.distr.flat]) + ");", file=f)
+            if n.is_noisy_or():
+                args = ["true", str(n.noisy_or['leak'])]
+                for pi, p in n.noisy_or['inhibit'].items():
+                    args += ["V_" + str(pi), str(p)]
+                print("  model_data = ( NoisyOR(" + ", ".join(args) + ") );", file=f)
+            else:
+                print("  data = (" + " ".join([str(x) for x in n.distr.flat]) + ");", file=f)
+            if n.is_logistic():
+                # non-Hugin attributes remembering how the table was obtained
+                print("  BNInter_model = \"LogisticRegression\";", file=f)
+                print("  BNInter_LR_C = \"" + repr(n.logistic['C']) + "\";", file=f)
+                print("  BNInter_LR_standardize = \"" + str(int(n.logistic['standardize'])) + "\";", file=f)
             print("}", file=f)
     for i, jn in enumerate(bn.joint_distrs):
         vars_str = " ".join("V_"+str(x) for x in jn.nodes)

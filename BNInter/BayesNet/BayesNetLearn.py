@@ -13,16 +13,25 @@ from ..Utils import convert_counts_dicts2numpyarrays
 from ..DataAccess import Attr
 from .BayesNet import BayesNet
 from .BNutils import blockiter, distr_2_str
+from .LogisticCPT import logistic_cpt
 
 
 def learnProbabilitiesFromData(bn, dataset, priorN = 1):
+    """Estimate network parameters from data.
+
+    Noisy-OR nodes keep their (user given) parameters.  Tables of
+    logistic regression nodes are fitted by logistic regression
+    (priorN is not used for them)."""
     asets = [n.parents + [i] for (i,n) in enumerate(bn) if not n.in_joint]
     counts, N, missing_counts = compute_counts_array(asets, bn.get_shape(), dataset)
     # single nodes
     for j, n in enumerate(bn):
-        if n.in_joint:
+        if n.in_joint or n.is_noisy_or():
             continue
         c = counts[tuple(n.parents + [j])]
+        if n.is_logistic():
+            n.distr = logistic_cpt(c, n.logistic['C'], n.logistic['standardize'])
+            continue
         ri = len(n.domain)
         rdistr = np.ravel(n.distr)
         rcount = np.ravel(c)
@@ -110,3 +119,14 @@ def makeIndependentStructure(bn):
     for node in bn:
         n = len(node.domain)
         node.set_parents_distr([], np.zeros(n) + 1.0/n)
+
+def nodeCounts(bn, j, dataset):
+    """Return the counts array of node j and its parents in dataset
+    (shape: parent domain sizes + [node domain size])."""
+    aset = bn[j].parents + [j]
+    if hasattr(dataset, "rewind"):
+        dataset.rewind()
+    counts, N, missing_counts = compute_counts_array([aset], bn.get_shape(), dataset)
+    if hasattr(dataset, "rewind"):
+        dataset.rewind()
+    return counts[tuple(aset)]
