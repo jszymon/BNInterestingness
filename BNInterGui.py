@@ -43,6 +43,9 @@ class PruneGUI(ttk.Frame):
         self.bn = None
         self.ds = None
         self.bn_interestingness = None
+        self.bdeu = None         # BDeu score of current network
+        self.prev_bdeu = None    # BDeu score before the last change
+        self.initial_bdeu = None # BDeu score before all changes
 
         self.master = master
         ttk.Frame.__init__(self, self.master)
@@ -108,6 +111,10 @@ class PruneGUI(ttk.Frame):
 
         run_button = ttk.Button(self, text = "run", command = self.run)
         run_button.pack()
+
+        # BDeu scores, packed before the pattern list to span the bottom of the window
+        self.bdeu_bar = tk.Label(self, text="", bd=1, relief=tk.SUNKEN, anchor=tk.W, justify=tk.LEFT)
+        self.bdeu_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
         ### list of interesting attrsets
         self.selected_attrs = []
@@ -405,6 +412,39 @@ class PruneGUI(ttk.Frame):
             # move frame down to make nodes clickable
             self.bn_canvas.tag_lower(jn_frame)
         self.bn_canvas.config(scrollregion=self.bn_canvas.bbox(tk.ALL))
+        self.update_bdeu()
+
+    def reset_bdeu(self):
+        """Forget BDeu history, e.g. after loading new data or network."""
+        self.bdeu = None
+        self.prev_bdeu = None
+        self.initial_bdeu = None
+        self.bdeu_bar.config(text="")
+
+    def update_bdeu(self):
+        """Recompute BDeu score of the current network and display it."""
+        if self.bn is None:
+            return
+        if self.ds is None:
+            self.bdeu_bar.config(text="BDeu: no data file selected")
+            return
+        if self.bn.get_attr_names() != self.ds.attrset.get_attr_names():
+            self.bdeu_bar.config(text="BDeu: network and data attributes don't match")
+            return
+        self.ds.rewind()
+        bdeu = BNInter.BayesNet.BayesNetLearn.BDeu(self.bn, self.ds)
+        self.ds.rewind()
+        self.prev_bdeu = self.bdeu
+        self.bdeu = bdeu
+        if self.initial_bdeu is None:
+            self.initial_bdeu = bdeu
+        lines = [f"BDeu log score: {self.bdeu:.4f}"]
+        if self.prev_bdeu is not None:
+            lines.append(f"before last change: {self.prev_bdeu:.4f}"
+                         f"   difference: {self.bdeu - self.prev_bdeu:+.4f}")
+        lines.append(f"before all changes: {self.initial_bdeu:.4f}"
+                     f"   difference: {self.bdeu - self.initial_bdeu:+.4f}")
+        self.bdeu_bar.config(text="\n".join(lines))
 
 
     def attr_set_clicked(self, *event):
@@ -564,9 +604,11 @@ class PruneGUI(ttk.Frame):
             showerror(message = "Error reading data file: " + str(e))
             self.data_file_name.set("")
             self.bn = None
+            self.reset_bdeu()
             return
         self.data_file_name.set(fname)
         self.bnet_file_name.set("")
+        self.reset_bdeu()
         print("assuming independent structure")
         self.bn = BayesNet(basename(self.ds.filename), [Attr(a.name, "CATEG", a.domain) for a in self.ds.attrset])
         BNInter.BayesNet.BayesNetLearn.makeIndependentStructure(self.bn)
@@ -589,8 +631,10 @@ class PruneGUI(ttk.Frame):
             showerror(message = "Could not read Bayesian network" + str(e))
             self.bnet_file_name.set("")
             self.bn = None
+            self.reset_bdeu()
             return
         self.bnet_file_name.set(fname)
+        self.reset_bdeu()
         self.draw_network()
 
 
