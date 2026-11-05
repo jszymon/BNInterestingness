@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article below."
+title: "BNInterestingness"
+type: software
+authors:
+  - family-names: Jaroszewicz
+    given-names: Szymon
+repository-code: "https://github.com/jszymon/BNInterestingness"
+license: GPL-3.0
+preferred-citation:
+  type: article
+  title: "Scalable pattern mining with Bayesian networks as background knowledge"
+  authors:
+    - family-names: Jaroszewicz
+      given-names: Szymon
+    - family-names: Scheffer
+      given-names: Tobias
+    - family-names: Simovici
+      given-names: Dan A.
+  journal: "Data Mining and Knowledge Discovery"
+  publisher:
+    name: Springer
+  volume: 18
+  issue: 1
+  start: 56
+  end: 100
+  year: 2009
+  month: 2
+  doi: "10.1007/s10618-008-0102-5"
+  url: "https://link.springer.com/article/10.1007/s10618-008-0102-5"
+  issn: "1384-5810"
