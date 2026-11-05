@@ -7,12 +7,13 @@ import random
 import sys
 import time
 
-sys.path.append("..")
-
-from DataAccess import create_arff_reader
-from BayesNet import BayesNet, read_Hugin_file, write_Hugin_file
-import BayesNet.BayesNetLearn
-from ExactInterestingness import BN_interestingness_exact
+from BNInter.DataAccess import create_arff_reader
+from BNInter.BayesNet import BayesNet, read_Hugin_file, write_Hugin_file
+from BNInter.BayesNet import ancestors
+from BNInter.BayesNet.BayesHuginFile import BNReadError
+import BNInter.BayesNet.BayesNetLearn as BayesNetLearn
+from BNInter.BayesPrune.ExactInterestingness import BN_interestingness_exact
+from BNInter.Utils.SEtree import SEtree
 
 
 
@@ -58,9 +59,9 @@ def print_attr_sets_with_inter(attr_sets_w_inter, maxlen = 10000, maxN = 10, mus
             inter, distr, edistr = bn_interestingness.compute_attrset_interestingness(aset)
             diff = numpy.abs(distr - edistr)
             indices = numpy.ndindex(diff.shape)
-            for i, d in itertools.izip(indices, numpy.ravel(diff)):
+            for i, d in zip(indices, numpy.ravel(diff)):
                 if d >= 0.9 * inter:
-                    idomlist = [str(bn_interestingness.ds.attrset[a].domain[v]) for a, v in itertools.izip(aset, i)]
+                    idomlist = [str(bn_interestingness.ds.attrset[a].domain[v]) for a, v in zip(aset, i)]
                     istr = ",".join(idomlist)
                     #print(i, distr, edistr)
                     print(istr + " => " + str(d) + "  P^BN=" + str(edistr[i]) +"  P^D=" + str(distr[i]))
@@ -68,18 +69,14 @@ def print_attr_sets_with_inter(attr_sets_w_inter, maxlen = 10000, maxN = 10, mus
 def topoPrune(bn, attr_sets_w_inter, mininter):
     # keep only interesting attrsets
     asets = [x for x in attr_sets_w_inter if x[1] >= mininter]
-    import Utils.SEtree
-    setree = Utils.SEtree.SEtree()
+    setree = SEtree()
     for aset, inter in asets:
         setree[aset] = inter
-    import BayesNet.BayesNetGraph
     pruned = []
     for aset, inter in asets:
-        asetnames = bn.attrNumbers2Names(aset)
-        ancestors = BayesNet.BayesNetGraph.ancestors(bn, asetnames)
-        ancestors.update(asetnames)
-        ancestorsnumbers = bn.attrNames2Numbers(ancestors)
-        #print(asetnames, ancestors)
+        ancestorsnumbers = ancestors(bn, list(aset))
+        ancestorsnumbers.update(aset)
+        #print(aset, ancestorsnumbers)
         L = list(setree.iter_included(ancestorsnumbers))
         L = [a for a in L if not set(a) == set(aset)] # this does topo + hierarchical
         #L = [a for a in L if not set(a).issuperset(set(aset))] # this does topo + hierarchical
@@ -92,7 +89,7 @@ def topoPrune(bn, attr_sets_w_inter, mininter):
 def testRun(bn):
     """Run a standard test."""
     debug = 1
-    t1 = time.clock()
+    t1 = time.perf_counter()
 
     ### Find interesting patterns
 
@@ -106,7 +103,7 @@ def testRun(bn):
 
 
     ### print results
-    t2 = time.clock()
+    t2 = time.perf_counter()
     print("Inter time=" + str(t2-t1))
     #print_attr_sets_with_inter(attr_sets_w_inter, 1000, len(attr_sets_w_inter), mode = ["attrset", "maxcell"], bn_interestingness = bn_interestingness)
     # smaller results:
@@ -126,16 +123,16 @@ def buildNetworkInteractively(bn, data_scanner):
     while not quit:
         bn.validate()
         ds.rewind()
-        BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
+        BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
         print("Interestingness with respect to")
         print(bn)
-        print(BayesNet.BayesNetLearn.lnP_dataset_cond_network_structure(bn, data))
-        t1 = time.clock()
+        print(BayesNetLearn.lnP_dataset_cond_network_structure(bn, data))
+        t1 = time.perf_counter()
         bn_interestingness = BN_interestingness_exact(bn, ds)
         attr_sets_w_inter = bn_interestingness.run(minsup = minsup, maxK = maxK, apriori_debug = debug)
         #bn_interestingness = BN_interestingness_sample(bn, ds)
         #attr_sets_w_inter = bn_interestingness.run(maxK = maxK)
-        t2 = time.clock()
+        t2 = time.perf_counter()
         print("Inter time=" + str(t2-t1))
 
 
@@ -183,7 +180,7 @@ def buildNetworkInteractively(bn, data_scanner):
                 bn.delEdge(src, dst)
                 break
             elif choice == "4":
-                BayesNet.BayesNetLearn.makeIndependentStructure(bn)
+                BayesNetLearn.makeIndependentStructure(bn)
                 break
             elif choice == "5":
                 print(bn)
@@ -221,27 +218,6 @@ if __name__ == "__main__":
     #base_name = "data/ksl_discr_missing"  # suffixes will be added here
     #minsup = 10
     #maxK = 4
-    base_name = "data/soybean"  # suffixes will be added here
-    minsup = 50
-    maxK = 3
-    #base_name = "data/breast-cancer"  # suffixes will be added here
-    #minsup = 2
-    #maxK = 5
-    #base_name = "data/anneal_discr3"  # suffixes will be added here
-    #minsup = 9
-    #maxK = 3
-    #base_name = "data/mushroom"  # suffixes will be added here
-    #minsup = 81
-    #maxK = 3
-    #base_name = "data/audiology"  # suffixes will be added here
-    #minsup = 2
-    #maxK = 3
-    #base_name = "data/lymph"  # suffixes will be added here
-    #minsup = 1
-    #maxK = 3
-    #base_name = "data/splice"  # suffixes will be added here
-    #minsup = 31
-    #maxK = 4
     #base_name = "/home/szymon/dmining/data/DrCiechanowicz/dSS/dSS_dscr_train"  # suffixes will be added here
     #minsup = 1
     #maxK = 4
@@ -275,23 +251,23 @@ if __name__ == "__main__":
     BNread = True
     try:
         bn = read_bn_network(base_name)
-    except BayesNet.BayesHuginFile.BNReadError as bne:
+    except BNReadError as bne:
         print(str(bne))
         BNread = False
     if not BNread:
         print("assuming independent structure")
-        bn = BayesNet.BayesNet.BayesNet(ds.filename, [a.name for a in ds.attrset], [a.domain for a in ds.attrset])
-        BayesNet.BayesNetLearn.makeIndependentStructure(bn)
+        bn = BayesNet(ds.filename, list(ds.attrset))
+        BayesNetLearn.makeIndependentStructure(bn)
         ds.rewind()
-        BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
+        BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
 
         
-    #print(BayesNet.BayesNetLearn.lnP_dataset_cond_network_structure(bn, ds))
+    #print(BayesNetLearn.lnP_dataset_cond_network_structure(bn, ds))
     ds.rewind()
 
-    #BayesNet.BayesNetLearn.makeIndependentStructure(bn)
+    #BayesNetLearn.makeIndependentStructure(bn)
     #ds.rewind()
-    #BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
+    #BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
 
 
     #bn.addEdge("sex","casecon")
@@ -301,11 +277,11 @@ if __name__ == "__main__":
     #bn.addEdge("ampd1", "casecon")
     #print(bn)
     #ds.rewind()
-    #BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
+    #BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
 
 
     # use independence structure
-    #BayesNet.BayesNetLearn.makeIndependentStructure(bn)
+    #BayesNetLearn.makeIndependentStructure(bn)
     #bn.addEdge("KAL4","KAL5")
     #bn.addEdge("PROK","KAL1")
     #bn.addEdge("wiek","MAP")
@@ -323,10 +299,10 @@ if __name__ == "__main__":
     ##bn.addEdge("ACE","dSS")
     #print(bn)
     #ds.rewind()
-    #BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
+    #BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
 
     #common sense
-    #BayesNet.BayesNetLearn.makeIndependentStructure(bn)
+    #BayesNetLearn.makeIndependentStructure(bn)
     #bn.addEdge("Sex", "Smok")
     #bn.addEdge("Sex", "BMI")
     #bn.addEdge("Sex", "Work")
@@ -338,7 +314,7 @@ if __name__ == "__main__":
     #bn.addEdge("Year", "BMI")
     #bn.addEdge("Alc", "Hyp")
     #ds.rewind()
-    #BayesNet.BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
+    #BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
     #
     #bn.addEdge("Sex", "FEV")
     #bn.addEdge("Year", "Alc")
@@ -367,8 +343,8 @@ if __name__ == "__main__":
     #bn.addEdge("Year", "Smok")
     #bn.addEdge("Smok", "Hyp")
     
-    #buildNetworkInteractively(bn, ds)
-    testRun(bn)
+    buildNetworkInteractively(bn, ds)
+    #testRun(bn)
 
     #print("Bayes prune")
     # group itemsets by attribute set
