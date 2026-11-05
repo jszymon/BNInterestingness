@@ -103,8 +103,6 @@ def BDeu(bn, dataset, priorN = None):
             lnP += lgamma(priorN / ri + Nijk) - lgamma(priorN / ri)
     return lnP
 
-
-
 def makeIndependentStructure(bn):
     """Make all attributes in bn independent.
 
@@ -112,22 +110,3 @@ def makeIndependentStructure(bn):
     for node in bn:
         n = len(node.domain)
         node.set_parents_distr([], np.zeros(n) + 1.0/n)
-
-
-
-if __name__ == '__main__':
-    bn = BayesNet("testNet",
-                  [Attr('A', "CATEG", [0,1]),
-                   Attr('B', "CATEG", [0,1]),
-                   Attr('Y', "CATEG", [0,1,2])])
-    print(bn)
-    bn['Y'].set_parents_distr(['B'], np.array([[0.7,0.1,0.2],[0.5,0.3,0.2]]))
-    print(bn)
-    print(bn.P([0,0,0]))
-    print(distr_2_str(bn.jointP()))
-
-    lnP = BDeu(bn, [[0,0,0],[0,0,1],[1,1,1]])
-    print(lnP, exp(lnP))
-
-    learnProbabilitiesFromData(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN = 0)
-    print(bn)
