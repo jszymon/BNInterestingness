@@ -69,16 +69,16 @@ def test_bn_w_joint_learn(basic_bayes_net):
     lnP2 = BDeu(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
     assert lnP2 <= 0
 
-def test_lnP_joint_score_equivalence(basic_bayes_net):
+def test_BDeu_joint_score_equivalence(basic_bayes_net):
     """BDeu is score equivalent: a joint node over A, B must score
     the same as the complete DAG A -> B."""
     bn = basic_bayes_net
     data = [[0,0,1],[0,1,0],[1,1,2],[1,1,1],[0,0,0],[1,0,2]]
-    lnP_indep = BDeu(bn, data, priorN=1)
+    BDeu_indep = BDeu(bn, data, priorN=1)
     bn.addEdge("A", "B")
-    lnP_edge = BDeu(bn, data, priorN=1)
+    BDeu_edge = BDeu(bn, data, priorN=1)
     bn.delEdge("A", "B")
     bn.addJointDistr(("A", "B"))
-    lnP_joint = BDeu(bn, data, priorN=1)
-    assert lnP_joint == pytest.approx(lnP_edge)
-    assert lnP_joint != pytest.approx(lnP_indep)
+    BDeu_joint = BDeu(bn, data, priorN=1)
+    assert BDeu_joint == pytest.approx(BDeu_edge)
+    assert BDeu_joint != pytest.approx(BDeu_indep)
