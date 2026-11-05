@@ -3,7 +3,6 @@
 
 import argparse
 import numpy
-import itertools
 import random
 import sys
 import time
@@ -28,7 +27,6 @@ maxK = 5
 
 def read_bn_network(filename):
     """Read a Bayesian network from a Hugin file."""
-    global debug
     bn = read_Hugin_file(filename)
     if debug > 1:
         print(bn)
@@ -268,13 +266,10 @@ if __name__ == "__main__":
     maxK = args.maxK
     if args.seed is not None:
         random.seed(args.seed)
-    
     debug = 1
-
 
     ds = create_arff_reader(args.dataset)
     ds.rewind()
-
     if args.network is not None:
         try:
             bn = read_bn_network(args.network)
@@ -284,99 +279,10 @@ if __name__ == "__main__":
         print("assuming independent structure")
         bn = BayesNet(ds.filename, list(ds.attrset))
         BayesNetLearn.makeIndependentStructure(bn)
-        ds.rewind()
         BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
-
-        
-    #print(BayesNetLearn.BDeu(bn, ds))
     ds.rewind()
 
-    #BayesNetLearn.makeIndependentStructure(bn)
-    #ds.rewind()
-    #BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
-
-
-    #bn.addEdge("sex","casecon")
-    #bn.addEdge("ace","anp34")
-    #bn.addEdge("ace","ampd1")
-    #bn.addEdge("ampd1", "anp12")
-    #bn.addEdge("ampd1", "casecon")
-    #print(bn)
-    #ds.rewind()
-    #BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
-
-
-    # use independence structure
-    #BayesNetLearn.makeIndependentStructure(bn)
-    #bn.addEdge("KAL4","KAL5")
-    #bn.addEdge("PROK","KAL1")
-    #bn.addEdge("wiek","MAP")
-    #bn.addEdge("PROK","KAL4")
-    #bn.addEdge("PROK","KAL5")
-    #bn.addEdge("PROK","PROK_A")
-    #bn.addEdge("PROK","PROK_B")
-    #bn.addEdge("PROK","PROK_H")
-    #bn.addEdge("PROK","PROK_I")
-    #bn.addEdge("PROK","PROK_Q")
-    #bn.addEdge("PROK","PROK_R")
-    #bn.addEdge("BE16","BE27")
-    #bn.addEdge("wiek","BMI")
-    ##bn.addEdge("plec","dSS")
-    ##bn.addEdge("ACE","dSS")
-    #print(bn)
-    #ds.rewind()
-    #BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
-
-    #common sense
-    #BayesNetLearn.makeIndependentStructure(bn)
-    #bn.addEdge("Sex", "Smok")
-    #bn.addEdge("Sex", "BMI")
-    #bn.addEdge("Sex", "Work")
-    #bn.addEdge("Sex", "Alc")
-    #bn.addEdge("BMI", "Hyp")
-    #bn.addEdge("Smok", "Hyp")
-    #bn.addEdge("Smok", "FEV")
-    #bn.addEdge("Year", "Work")
-    #bn.addEdge("Year", "BMI")
-    #bn.addEdge("Alc", "Hyp")
-    #ds.rewind()
-    #BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
-    #
-    #bn.addEdge("Sex", "FEV")
-    #bn.addEdge("Year", "Alc")
-    #bn.addEdge("Year", "Kol")
-    #bn.addEdge("Sex", "Kol")
-
-
-
-    #bn.addEdge("Year", "BMI")
-    #bn.addEdge("Year", "BMI")
-    #bn.addEdge("Year", "FEV")
-    #bn.addEdge("Alc", "FEV")
-
-    
-    #interestingness aided build
-    #bn.addEdge("Sex", "FEV")
-    #bn.addEdge("Sex", "Smok")
-    #bn.addEdge("Year", "Alc")
-    #bn.addEdge("Sex", "Alc")
-    #bn.addEdge("Year", "Kol")
-    #bn.addEdge("Sex", "Kol")
-    #bn.addEdge("Sex", "BMI")
-    #bn.addEdge("BMI", "Hyp")
-    #bn.addEdge("Year", "Work")
-    #bn.addEdge("Sex", "Work")
-    #bn.addEdge("Year", "Smok")
-    #bn.addEdge("Smok", "Hyp")
-    
     if args.batch:
         testRun(bn)
     else:
         buildNetworkInteractively(bn, ds)
-
-    #print("Bayes prune")
-    # group itemsets by attribute set
-    #groupAndPrintsAttrsets(isets_w_inter, attrnames, domains)
-
-
-
