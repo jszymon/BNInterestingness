@@ -53,7 +53,7 @@ def learnProbabilitiesFromData(bn, dataset, priorN = 1):
         new_p = {x: v / n for x, v in c.items()}
         jn.distr.set_distr(new_p, prior_factor = alpha)
 
-def lnP_dataset_cond_network_structure(bn, dataset, priorN = None):
+def BDeu(bn, dataset, priorN = None):
     """Compute the natural logarithm of probability that the
     dataset is generated from a network with current structure.
 
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     print(bn.P([0,0,0]))
     print(distr_2_str(bn.jointP()))
 
-    lnP = lnP_dataset_cond_network_structure(bn, [[0,0,0],[0,0,1],[1,1,1]])
+    lnP = BDeu(bn, [[0,0,0],[0,0,1],[1,1,1]])
     print(lnP, exp(lnP))
 
     learnProbabilitiesFromData(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN = 0)

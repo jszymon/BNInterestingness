@@ -3,7 +3,7 @@ import pytest
 
 from BNInter.BayesNet import BayesNet
 from BNInter.BayesNet.BayesNetLearn import learnProbabilitiesFromData
-from BNInter.BayesNet.BayesNetLearn import lnP_dataset_cond_network_structure
+from BNInter.BayesNet.BayesNetLearn import BDeu
 from BNInter.BayesNet.BayesNetLearn import makeIndependentStructure
 from BNInter.DataAccess import Attr
 
@@ -30,11 +30,11 @@ def test_basic_bn_learn(basic_bayes_net):
     py = joint_p_array.sum(axis=(0,1))
     assert np.allclose(py, [1/3, 1/3, 1/3])
 
-    lnP = lnP_dataset_cond_network_structure(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
+    lnP = BDeu(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
     assert lnP <= 0
     makeIndependentStructure(bn)
     learnProbabilitiesFromData(bn, [[0,0,1],[0,1,0],[1,1,2]])
-    lnP2 = lnP_dataset_cond_network_structure(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
+    lnP2 = BDeu(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
     assert lnP2 <= 0
 
 def test_bn_w_joint_learn(basic_bayes_net):
@@ -62,11 +62,11 @@ def test_bn_w_joint_learn(basic_bayes_net):
     pb = joint_p_array.sum(axis=(0,2))
     assert np.allclose(pb, correct_p.sum(axis=0))
 
-    lnP = lnP_dataset_cond_network_structure(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
+    lnP = BDeu(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
     assert lnP <= 0
     makeIndependentStructure(bn)
     learnProbabilitiesFromData(bn, [[0,0,1],[0,1,0],[1,1,2]], priorN=1)
-    lnP2 = lnP_dataset_cond_network_structure(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
+    lnP2 = BDeu(bn, [[0,0,0],[0,0,1],[1,1,1]], priorN=1)
     assert lnP2 <= 0
 
 def test_lnP_joint_score_equivalence(basic_bayes_net):
@@ -74,11 +74,11 @@ def test_lnP_joint_score_equivalence(basic_bayes_net):
     the same as the complete DAG A -> B."""
     bn = basic_bayes_net
     data = [[0,0,1],[0,1,0],[1,1,2],[1,1,1],[0,0,0],[1,0,2]]
-    lnP_indep = lnP_dataset_cond_network_structure(bn, data, priorN=1)
+    lnP_indep = BDeu(bn, data, priorN=1)
     bn.addEdge("A", "B")
-    lnP_edge = lnP_dataset_cond_network_structure(bn, data, priorN=1)
+    lnP_edge = BDeu(bn, data, priorN=1)
     bn.delEdge("A", "B")
     bn.addJointDistr(("A", "B"))
-    lnP_joint = lnP_dataset_cond_network_structure(bn, data, priorN=1)
+    lnP_joint = BDeu(bn, data, priorN=1)
     assert lnP_joint == pytest.approx(lnP_edge)
     assert lnP_joint != pytest.approx(lnP_indep)

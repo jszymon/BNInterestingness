@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 
+import argparse
 import numpy
 import itertools
 import random
@@ -15,29 +16,19 @@ import BNInter.BayesNet.BayesNetLearn as BayesNetLearn
 from BNInter.BayesPrune.ExactInterestingness import BN_interestingness_exact
 from BNInter.Utils.SEtree import SEtree
 
-
-
-
-
 global debug
 debug = 0
-
-
-
 
 global minsup
 global maxK
 minsup = 10
 maxK = 5
-#minsup = 50
-#maxK = 3
 
 
 
-def read_bn_network(base_name):
+def read_bn_network(filename):
     """Read a Bayesian network from a Hugin file."""
     global debug
-    filename = base_name + ".net"
     bn = read_Hugin_file(filename)
     if debug > 1:
         print(bn)
@@ -114,9 +105,11 @@ def testRun(bn):
     #print_attr_sets_with_inter(attr_sets_w_inter, 1000, len(attr_sets_w_inter))
     
 
-def print_bdeu(bdeu, initial_bdeu):
+def print_bdeu(bdeu, prev_bdeu, initial_bdeu):
     print("BDeu log score:", bdeu)
-    print("BDeu log score before changes:", initial_bdeu, " difference:", bdeu - initial_bdeu)
+    if prev_bdeu is not None:
+        print("BDeu log score before last change:", prev_bdeu, " difference:", bdeu - prev_bdeu)
+    print("BDeu log score before all changes:", initial_bdeu, " difference:", bdeu - initial_bdeu)
 
 def buildNetworkInteractively(bn, data_scanner):
     quit = False
@@ -125,16 +118,17 @@ def buildNetworkInteractively(bn, data_scanner):
     nattrsets = 10
     maxlen = 1000
     initial_bdeu = None # BDeu score of the network before any changes
+    bdeu = None
     while not quit:
         bn.validate()
         ds.rewind()
         BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
         print("Interestingness with respect to")
         print(bn)
-        bdeu = BayesNetLearn.lnP_dataset_cond_network_structure(bn, data)
+        prev_bdeu = bdeu # BDeu score before the last change
+        bdeu = BayesNetLearn.BDeu(bn, data)
         if initial_bdeu is None:
             initial_bdeu = bdeu
-        print_bdeu(bdeu, initial_bdeu)
         t1 = time.perf_counter()
         bn_interestingness = BN_interestingness_exact(bn, ds)
         attr_sets_w_inter = bn_interestingness.run(minsup = minsup, maxK = maxK, apriori_debug = debug)
@@ -155,6 +149,8 @@ def buildNetworkInteractively(bn, data_scanner):
                 must_contain_no = None
             print_attr_sets_with_inter(attr_sets_w_inter, maxlen, nattrsets, must_contain_attrno = must_contain_no,
                                        mode = ["attrset", "maxcell"], bn_interestingness = bn_interestingness)
+            print()
+            print_bdeu(bdeu, prev_bdeu, initial_bdeu)
             print()
             print("1. add edge")
             print("2. delete edge")
@@ -185,19 +181,26 @@ def buildNetworkInteractively(bn, data_scanner):
                 if bn[dst].in_joint:
                     print("nodes in a joint distribution cannot have parents")
                     continue
-                bn.addEdge(src, dst)
+                try:
+                    bn.addEdge(src, dst)
+                except RuntimeError as e:
+                    print(e)
+                    continue
                 break
             elif choice == "2":
                 src = input("Enter from attribute: ")
                 dst = input("Enter to attribute: ")
-                bn.delEdge(src, dst)
+                try:
+                    bn.delEdge(src, dst)
+                except (RuntimeError, KeyError) as e:
+                    print(e)
+                    continue
                 break
             elif choice == "4":
                 BayesNetLearn.makeIndependentStructure(bn)
                 break
             elif choice == "5":
                 print(bn)
-                print_bdeu(bdeu, initial_bdeu)
             elif choice == "6":
                 try:
                     nattrsets = int(input("Enter number of attrsets shown: "))
@@ -247,54 +250,37 @@ def buildNetworkInteractively(bn, data_scanner):
     
 
 if __name__ == "__main__":
-    excluded_attrs = []
-    selectionCond = None
-    base_name = "data/ksl_discr"  # suffixes will be added here
-    minsup = 10
-    maxK = 5
-    #base_name = "data/ksl_discr_subset"  # data attrs are subset of network attrs
-    #minsup = 10
-    #maxK = 4
-    #base_name = "data/ksl_discr_missing"  # suffixes will be added here
-    #minsup = 10
-    #maxK = 4
-    #base_name = "/home/szymon/dmining/data/DrCiechanowicz/dSS/dSS_dscr_train"  # suffixes will be added here
-    #minsup = 1
-    #maxK = 4
-    #base_name = "/home/szymon/dmining/data/DrCiechanowicz/stulatkowie/stulatkowie"  # suffixes will be added here
-    #minsup = 1
-    #maxK = 4
-    #base_name = "data/Munin_final_150"  # suffixes will be added here
-    #minsup = 1
-    #maxK = 3
-    #base_name = "data/Munin2_final_100"  # suffixes will be added here
-    #minsup = 1
-    #maxK = 2
-    #base_name = "/home/szymon/dmining/data/Borreliosis/borrelia"  # suffixes will be added here
-    #minsup = 1
-    #maxK = 10
-    #excluded_attrs = ['Insectbite','Duration','Month']
-    #def select(row): return row[77] == 0
-    #selectionCond = select
-   
+    parser = argparse.ArgumentParser(
+        description="Find patterns in data which are interesting with respect to a Bayesian network.")
+    parser.add_argument("dataset", help="dataset in ARFF format")
+    parser.add_argument("network", nargs="?", default=None,
+                        help="Bayesian network in Hugin .net format (default: all attributes independent)")
+    parser.add_argument("--minsup", type=int, default=minsup,
+                        help=f"minimum support of attribute sets (default: {minsup})")
+    parser.add_argument("--maxK", type=int, default=maxK,
+                        help=f"maximum size of attribute sets (default: {maxK})")
+    parser.add_argument("--seed", type=int, default=None, help="random seed")
+    parser.add_argument("--batch", action="store_true",
+                        help="print interesting patterns and exit instead of building the network interactively")
+    args = parser.parse_args()
 
-    if len(sys.argv) >= 2:
-        random.seed(int(sys.argv[1]))
+    minsup = args.minsup
+    maxK = args.maxK
+    if args.seed is not None:
+        random.seed(args.seed)
     
     debug = 1
 
 
-    filename = base_name + ".arff"
-    ds = create_arff_reader(filename)
+    ds = create_arff_reader(args.dataset)
     ds.rewind()
 
-    BNread = True
-    try:
-        bn = read_bn_network(base_name)
-    except BNReadError as bne:
-        print(str(bne))
-        BNread = False
-    if not BNread:
+    if args.network is not None:
+        try:
+            bn = read_bn_network(args.network)
+        except BNReadError as bne:
+            sys.exit(str(bne))
+    else:
         print("assuming independent structure")
         bn = BayesNet(ds.filename, list(ds.attrset))
         BayesNetLearn.makeIndependentStructure(bn)
@@ -302,7 +288,7 @@ if __name__ == "__main__":
         BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
 
         
-    #print(BayesNetLearn.lnP_dataset_cond_network_structure(bn, ds))
+    #print(BayesNetLearn.BDeu(bn, ds))
     ds.rewind()
 
     #BayesNetLearn.makeIndependentStructure(bn)
@@ -383,8 +369,10 @@ if __name__ == "__main__":
     #bn.addEdge("Year", "Smok")
     #bn.addEdge("Smok", "Hyp")
     
-    buildNetworkInteractively(bn, ds)
-    #testRun(bn)
+    if args.batch:
+        testRun(bn)
+    else:
+        buildNetworkInteractively(bn, ds)
 
     #print("Bayes prune")
     # group itemsets by attribute set
