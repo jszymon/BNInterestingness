@@ -156,6 +156,8 @@ def buildNetworkInteractively(bn, data_scanner):
             print("6. limit number of displayed sets")
             print("7. set 'must have' attribute")
             print("8. save network")
+            print("9. add joint node")
+            print("10. delete joint node")
             print("Q. quit")
             choice = input("-->")
             if choice in ["q", "Q"]:
@@ -171,6 +173,9 @@ def buildNetworkInteractively(bn, data_scanner):
                 dst = input("Enter to attribute: ")
                 if dst not in attrnames:
                     print("wrong attribute name")
+                    continue
+                if bn[dst].in_joint:
+                    print("nodes in a joint distribution cannot have parents")
                     continue
                 bn.addEdge(src, dst)
                 break
@@ -202,6 +207,32 @@ def buildNetworkInteractively(bn, data_scanner):
                 of = open(fname, "w")
                 write_Hugin_file(bn, of)
                 of.close()
+            elif choice == "9":
+                names = [n.strip() for n in input("Enter attributes (comma separated): ").split(",")]
+                names = [n for n in names if n != ""]
+                if any(n not in attrnames for n in names):
+                    print("wrong attribute name")
+                    continue
+                if len(set(names)) < 2:
+                    print("a joint node needs at least two distinct attributes")
+                    continue
+                try:
+                    bn.addJointDistr(list(dict.fromkeys(names)))
+                except RuntimeError as e:
+                    print(e)
+                    continue
+                break
+            elif choice == "10":
+                name = input("Enter an attribute in the joint node: ").strip()
+                if name not in attrnames:
+                    print("wrong attribute name")
+                    continue
+                try:
+                    bn.delJointDistr(name)
+                except RuntimeError as e:
+                    print(e)
+                    continue
+                break
             else:
                 print("Wrong choice")
     
