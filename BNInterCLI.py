@@ -114,19 +114,27 @@ def testRun(bn):
     #print_attr_sets_with_inter(attr_sets_w_inter, 1000, len(attr_sets_w_inter))
     
 
+def print_bdeu(bdeu, initial_bdeu):
+    print("BDeu log score:", bdeu)
+    print("BDeu log score before changes:", initial_bdeu, " difference:", bdeu - initial_bdeu)
+
 def buildNetworkInteractively(bn, data_scanner):
     quit = False
     data = list(ds)
     must_contain_attr = None # attribute that displayed attrsets must contain
     nattrsets = 10
     maxlen = 1000
+    initial_bdeu = None # BDeu score of the network before any changes
     while not quit:
         bn.validate()
         ds.rewind()
         BayesNetLearn.learnProbabilitiesFromData(bn, ds, priorN = 0)
         print("Interestingness with respect to")
         print(bn)
-        print(BayesNetLearn.lnP_dataset_cond_network_structure(bn, data))
+        bdeu = BayesNetLearn.lnP_dataset_cond_network_structure(bn, data)
+        if initial_bdeu is None:
+            initial_bdeu = bdeu
+        print_bdeu(bdeu, initial_bdeu)
         t1 = time.perf_counter()
         bn_interestingness = BN_interestingness_exact(bn, ds)
         attr_sets_w_inter = bn_interestingness.run(minsup = minsup, maxK = maxK, apriori_debug = debug)
@@ -189,6 +197,7 @@ def buildNetworkInteractively(bn, data_scanner):
                 break
             elif choice == "5":
                 print(bn)
+                print_bdeu(bdeu, initial_bdeu)
             elif choice == "6":
                 try:
                     nattrsets = int(input("Enter number of attrsets shown: "))
